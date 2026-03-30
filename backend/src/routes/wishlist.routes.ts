@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { getWishlist, addToWishlist, removeFromWishlist, moveToCart } from '../controllers';
+import { authMiddleware } from '../middleware/auth.middleware';
+const router = Router();
+router.use(authMiddleware);
+router.get('/', getWishlist);
+router.post('/add', addToWishlist);
+router.post('/move-to-cart/:productId', moveToCart);
+router.delete('/:productId', removeFromWishlist);
+export default router;

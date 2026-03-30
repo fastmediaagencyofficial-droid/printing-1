@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -File \".specify/scripts/powershell/setup-plan.ps1\" -Json)",
+      "Bash(powershell.exe -File \".specify/scripts/powershell/create-new-feature.ps1\" -Json \"now specify the complete flow of the app\" -Number 1 -ShortName \"complete-app-flow\")",
+      "Bash(powershell.exe -File \".specify/scripts/powershell/update-agent-context.ps1\" -AgentType claude)",
+      "Bash(powershell.exe -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json)",
+      "Bash(powershell.exe -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(tar -tzf fast_printing_app.tar.gz)",
+      "Bash(tar -xzf fast_printing_app.tar.gz)",
+      "Bash(cp -r fast_printing_app/backend .)",
+      "Bash(cp -r fast_printing_app/frontend .)",
+      "Bash(for f:*)",
+      "Bash(do)",
+      "Bash(echo \"=== $f ===\")",
+      "Read(//d/flutter projects/printing-packaging-app/**)",
+      "Bash(done)",
+      "Bash(powershell -File \".specify/scripts/powershell/check-prerequisites.ps1\" -Json -RequireTasks -IncludeTasks)",
+      "Bash(ls:*)",
+      "Bash(npx tsc:*)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(npm install:*)",
+      "Bash(node_modules/.bin/prisma generate:*)",
+      "Bash(node -e \":*)",
+      "Bash(flutter analyze:*)"
+    ]
+  }
+}

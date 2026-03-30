@@ -1,0 +1,54 @@
+# ── Node.js / Backend ─────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Prisma
+backend/prisma/migrations/
+
+# ── Flutter / Frontend ────────────────────────────────────────────────────────
+*.class
+*.lock
+*.dart_tool/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+frontend/.dart_tool/
+frontend/build/
+frontend/android/.gradle/
+frontend/android/local.properties
+frontend/android/key.properties
+frontend/android/app/google-services.json
+frontend/ios/Flutter/flutter_export_environment.sh
+frontend/ios/Pods/
+*.iml
+GeneratedPluginRegistrant.*
+
+# ── React Admin ───────────────────────────────────────────────────────────────
+admin/node_modules/
+admin/dist/
+
+# ── Universal ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+
+# Archives (keep schema, not archive)
+*.tar.gz
+fast_printing_app/

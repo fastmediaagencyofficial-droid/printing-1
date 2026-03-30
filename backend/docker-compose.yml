@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  api:
+    build: .
+    container_name: fast_printing_api
+    ports:
+      - "5000:5000"
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: fast_printing_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: fastprinting
+      POSTGRES_USER: fp_user
+      POSTGRES_PASSWORD: fp_secret
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fp_user -d fastprinting"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:

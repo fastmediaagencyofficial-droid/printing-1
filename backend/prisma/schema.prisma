@@ -1,0 +1,307 @@
+// Prisma Schema — Fast Printing & Packaging
+// Database: PostgreSQL (free via Neon, Supabase, or Railway)
+// Run: npx prisma generate && npx prisma db push
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USER ────────────────────────────────────────────────────────────────────
+model User {
+  id          String  @id @default(cuid())
+  googleId    String  @unique
+  email       String  @unique
+  displayName String
+  photoUrl    String?
+  phone       String?
+  role        Role    @default(CUSTOMER)
+
+  // Shipping address
+  street     String?
+  city       String?
+  province   String?
+  postalCode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart         CartItem[]
+  wishlist     WishlistItem[]
+  orders       Order[]
+  quotes       Quote[]
+
+  @@map("users")
+}
+
+// ─── PRODUCT ─────────────────────────────────────────────────────────────────
+model Product {
+  id            String  @id @default(cuid())
+  name          String
+  slug          String  @unique
+  description   String
+  category      String
+  startingPrice Float   @default(0)
+  priceUnit     String  @default("custom quote")
+  isActive      Boolean @default(true)
+  isFeatured    Boolean @default(false)
+  sortOrder     Int     @default(0)
+
+  // Primary admin-managed Cloudinary image (Article VIII)
+  imageUrl String?
+
+  // Additional image URLs
+  images String[]
+
+  // Industries this product serves (comma-separated slugs)
+  industries String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  specs         ProductSpec[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+  orderItems    OrderItem[]
+
+  @@map("products")
+}
+
+model ProductSpec {
+  id        String   @id @default(cuid())
+  productId String
+  label     String
+  options   String[]
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_specs")
+}
+
+// ─── SERVICE ─────────────────────────────────────────────────────────────────
+model Service {
+  id               String   @id @default(cuid())
+  name             String
+  slug             String   @unique
+  description      String
+  shortDescription String
+  imageUrl         String?
+  features         String[]
+  isActive         Boolean  @default(true)
+  sortOrder        Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("services")
+}
+
+// ─── CATEGORY ─────────────────────────────────────────────────────────────────
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("categories")
+}
+
+// ─── INDUSTRY ─────────────────────────────────────────────────────────────────
+model Industry {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@map("industries")
+}
+
+// ─── CART ─────────────────────────────────────────────────────────────────────
+model CartItem {
+  id          String  @id @default(cuid())
+  userId      String
+  productId   String
+  productName String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  customSpecs Json?
+  note        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("cart_items")
+}
+
+// ─── WISHLIST ─────────────────────────────────────────────────────────────────
+model WishlistItem {
+  id        String @id @default(cuid())
+  userId    String
+  productId String
+
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
+// ─── ORDER ────────────────────────────────────────────────────────────────────
+model Order {
+  id            String        @id @default(cuid())
+  orderId       String        @unique  // e.g. FP-20240601-1234
+  userId        String
+  userEmail     String
+  userName      String
+  totalAmount   Float
+  status        OrderStatus   @default(PENDING_PAYMENT)
+  paymentMethod PaymentMethod
+  paymentProofUrl    String?
+  paymentVerifiedAt  DateTime?
+
+  // Shipping
+  shippingStreet   String?
+  shippingCity     String?
+  shippingProvince String?
+  shippingPostal   String?
+
+  notes      String?
+  adminNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  productId   String?
+  productName String
+  quantity    Int
+  unitPrice   Float
+  totalPrice  Float
+  customSpecs Json?
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// ─── PAYMENT PROOF ────────────────────────────────────────────────────────────
+model PaymentProof {
+  id         String        @id @default(cuid())
+  orderId    String
+  userId     String
+  method     PaymentMethod
+  amount     Float
+  proofUrl   String
+  status     ProofStatus   @default(PENDING)
+  verifiedAt DateTime?
+  notes      String?
+
+  createdAt DateTime @default(now())
+
+  @@map("payment_proofs")
+}
+
+// ─── QUOTE ────────────────────────────────────────────────────────────────────
+model Quote {
+  id                  String      @id @default(cuid())
+  quoteId             String      @unique
+  userId              String?
+  name                String
+  email               String
+  phone               String
+  product             String
+  quantity            Int
+  size                String?
+  material            String?
+  specialRequirements String?
+  deliveryLocation    String?
+  deadline            String?
+  status              QuoteStatus @default(PENDING)
+  adminResponse       String?
+  estimatedPrice      Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("quotes")
+}
+
+// ─── CONTACT MESSAGE ─────────────────────────────────────────────────────────
+model ContactMessage {
+  id        String @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  service   String?
+  message   String
+  isRead    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_UPLOADED
+  CONFIRMED
+  IN_PRODUCTION
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  JAZZCASH
+  EASYPAISA
+}
+
+enum ProofStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum QuoteStatus {
+  PENDING
+  REVIEWED
+  SENT
+  ACCEPTED
+  REJECTED
+}
