@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -16,7 +17,12 @@ final sl = GetIt.instance;
 Future<void> init() async {
   // ── External ──────────────────────────────────────────────────────────────
   sl.registerLazySingleton<GoogleSignIn>(
-    () => GoogleSignIn(scopes: ['email', 'profile']),
+    () => kIsWeb
+        ? GoogleSignIn(scopes: ['email', 'profile'])
+        : GoogleSignIn(
+            scopes: ['email', 'profile'],
+            serverClientId: '263680543564-cbf6ocmcddpq8ul9o2cg792hcku0v08c.apps.googleusercontent.com',
+          ),
   );
 
   // ── Auth ──────────────────────────────────────────────────────────────────

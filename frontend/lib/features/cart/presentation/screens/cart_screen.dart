@@ -19,7 +19,7 @@ class CartScreen extends StatelessWidget {
         title: const Text('My Cart'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
         ),
         actions: [
           BlocBuilder<CartBloc, CartState>(

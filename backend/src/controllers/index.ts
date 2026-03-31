@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '../config/database';
-import { verifyGoogleToken } from '../config/google-auth';
+import { verifyGoogleToken, verifyGoogleAccessToken } from '../config/google-auth';
 import { uploadImage } from '../config/cloudinary';
 import { signToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth.middleware';
@@ -26,10 +26,12 @@ import { logger } from '../utils/logger';
  */
 export const googleLogin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { idToken } = req.body;
-    if (!idToken) { sendBadRequest(res, 'idToken is required'); return; }
+    const { idToken, accessToken } = req.body;
+    if (!idToken && !accessToken) { sendBadRequest(res, 'idToken or accessToken is required'); return; }
 
-    const google = await verifyGoogleToken(idToken);
+    const google = idToken
+      ? await verifyGoogleToken(idToken)
+      : await verifyGoogleAccessToken(accessToken);
 
     // Upsert user — check by googleId first, fall back to email (preserves pre-seeded ADMIN role)
     let user = await prisma.user.findUnique({ where: { googleId: google.googleId } });

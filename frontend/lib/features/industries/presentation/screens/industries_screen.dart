@@ -253,7 +253,7 @@ class IndustryDetailScreen extends StatelessWidget {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () { try { context.pop(); } catch (_) { context.go('/industries'); } },
         ),
       ),
       body: SingleChildScrollView(

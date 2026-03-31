@@ -22,7 +22,7 @@ class PortfolioScreen extends StatelessWidget {
       backgroundColor: AppColors.white,
       appBar: AppBar(
         title: const Text('Our Portfolio'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => context.pop()),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } }),
       ),
       body: GridView.builder(
         padding: const EdgeInsets.all(16),

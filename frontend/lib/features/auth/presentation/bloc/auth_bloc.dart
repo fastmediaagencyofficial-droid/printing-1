@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:dio/dio.dart';
@@ -125,16 +126,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       if (googleUser == null) { emit(AuthUnauthenticated()); return; }
 
       final googleAuth = await googleUser.authentication;
+
+      // Web only returns accessToken; mobile returns idToken
       final idToken = googleAuth.idToken;
-      if (idToken == null) {
-        emit(const AuthError(message: 'Could not get Google ID token'));
+      final accessToken = googleAuth.accessToken;
+
+      if (idToken == null && accessToken == null) {
+        emit(const AuthError(message: 'Could not get Google token'));
         return;
       }
 
-      // Step 2: Send idToken to our backend — backend verifies with google-auth-library
+      // Step 2: Send token to backend — prefer idToken (mobile), fall back to accessToken (web)
+      final Map<String, dynamic> tokenPayload = kIsWeb && idToken == null
+          ? {'accessToken': accessToken}
+          : {'idToken': idToken};
+
       final res = await ApiService.instance.dio.post(
         ApiConstants.googleLogin,
-        data: {'idToken': idToken},
+        data: tokenPayload,
       );
 
       if (res.statusCode == 200 && res.data['success'] == true) {

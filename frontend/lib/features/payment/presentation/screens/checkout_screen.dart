@@ -53,7 +53,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             title: const Text('Checkout'),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_rounded),
-              onPressed: () => context.pop(),
+              onPressed: () { try { context.pop(); } catch (_) { context.go('/cart'); } },
             ),
           ),
           body: SingleChildScrollView(

@@ -57,7 +57,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       pinned: true,
       backgroundColor: AppColors.white,
       leading: GestureDetector(
-        onTap: () => context.pop(),
+        onTap: () { try { context.pop(); } catch (_) { context.go('/products'); } },
         child: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(

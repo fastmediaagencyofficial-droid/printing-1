@@ -17,7 +17,7 @@ class WishlistScreen extends StatelessWidget {
         title: const Text('My Wishlist'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
         ),
       ),
       body: BlocBuilder<WishlistBloc, WishlistState>(

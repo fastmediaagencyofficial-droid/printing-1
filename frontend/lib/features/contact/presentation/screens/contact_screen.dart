@@ -39,7 +39,7 @@ class _ContactScreenState extends State<ContactScreen> {
         title: const Text('Contact Us'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
         ),
       ),
       body: SingleChildScrollView(

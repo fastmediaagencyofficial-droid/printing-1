@@ -20,7 +20,7 @@ class _QuoteRequestScreenState extends State<QuoteRequestScreen> {
       backgroundColor: AppColors.white,
       appBar: AppBar(
         title: const Text('Request a Quote'),
-        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => context.pop()),
+        leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } }),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

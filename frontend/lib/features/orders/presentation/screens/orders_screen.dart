@@ -20,7 +20,7 @@ class OrdersScreen extends StatelessWidget {
           title: const Text('My Orders'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => context.pop(),
+            onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
           ),
         ),
         body: BlocBuilder<OrderBloc, OrderState>(
@@ -195,7 +195,7 @@ class OrderDetailScreen extends StatelessWidget {
           title: const Text('Order Detail'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () => context.pop(),
+            onPressed: () { try { context.pop(); } catch (_) { context.go('/orders'); } },
           ),
         ),
         body: BlocBuilder<OrderBloc, OrderState>(

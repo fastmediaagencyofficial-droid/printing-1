@@ -152,7 +152,7 @@ class ServiceDetailScreen extends StatelessWidget {
             w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () { try { context.pop(); } catch (_) { context.go('/services'); } },
         ),
       ),
       body: SingleChildScrollView(

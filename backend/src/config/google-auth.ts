@@ -45,3 +45,34 @@ export const verifyGoogleToken = async (
     throw new Error('Invalid or expired Google token');
   }
 };
+
+/**
+ * Verifies a Google access token (used by Flutter Web).
+ * Calls Google's userinfo endpoint to get user details.
+ */
+export const verifyGoogleAccessToken = async (
+  accessToken: string
+): Promise<GoogleTokenPayload> => {
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`
+    );
+    if (!response.ok) {
+      throw new Error(`Userinfo request failed: ${response.status}`);
+    }
+    const info = (await response.json()) as any;
+    if (!info.sub) {
+      throw new Error('Empty userinfo response');
+    }
+    return {
+      googleId: info.sub,
+      email: info.email ?? '',
+      displayName: info.name ?? info.email ?? 'User',
+      photoUrl: info.picture,
+      emailVerified: info.email_verified ?? false,
+    };
+  } catch (err) {
+    logger.error('Google access token verification failed:', err);
+    throw new Error('Invalid or expired Google access token');
+  }
+};
