@@ -16,9 +16,15 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   // ── External ──────────────────────────────────────────────────────────────
+  // Replace YOUR_WEB_CLIENT_ID with the Web Application OAuth 2.0 client ID from Google Cloud Console
+  const webClientId = '263680543564-cbf6ocmcddpq8ul9o2cg792hcku0v08c.apps.googleusercontent.com';
+
   sl.registerLazySingleton<GoogleSignIn>(
     () => kIsWeb
-        ? GoogleSignIn(scopes: ['email', 'profile'])
+        ? GoogleSignIn(
+            clientId: webClientId,
+            scopes: ['email', 'profile'],
+          )
         : GoogleSignIn(
             scopes: ['email', 'profile'],
             serverClientId: '263680543564-cbf6ocmcddpq8ul9o2cg792hcku0v08c.apps.googleusercontent.com',

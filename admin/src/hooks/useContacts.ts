@@ -17,7 +17,7 @@ const KEY = ['admin', 'contacts'];
 export function useContacts(unreadOnly?: boolean) {
   return useQuery<AdminContact[]>({
     queryKey: [...KEY, unreadOnly],
-    queryFn: () => api.get('/admin/contacts', { params: unreadOnly ? { unread: true } : {} }).then(r => r.data.data),
+    queryFn: () => api.get('/admin/contacts', { params: { limit: 200, ...(unreadOnly ? { unread: true } : {}) } }).then(r => r.data.data.contacts ?? r.data.data),
   });
 }
 

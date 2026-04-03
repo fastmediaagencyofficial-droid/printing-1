@@ -93,7 +93,7 @@ class _ServiceCard extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: service.color.withOpacity(0.1),
+                color: service.color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(service.icon, color: service.color, size: 28),
@@ -204,7 +204,7 @@ class ServiceDetailScreen extends StatelessWidget {
                   Container(
                     width: 22,
                     height: 22,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.redSurface,
                       shape: BoxShape.circle,
                     ),

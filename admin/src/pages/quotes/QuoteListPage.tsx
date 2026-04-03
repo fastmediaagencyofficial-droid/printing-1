@@ -11,16 +11,18 @@ export default function QuoteListPage() {
   const { data: quotes = [], isLoading } = useQuotes(statusFilter === 'ALL' ? undefined : statusFilter);
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Quotes</h1>
-        <p className="text-sm text-gray-500 mt-1">{quotes.length} quote requests</p>
+    <div className="p-4 md:p-8">
+      <div className="mb-5">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Quotes</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{quotes.length} quote requests</p>
       </div>
 
       <div className="flex gap-2 flex-wrap mb-4">
         {STATUS_FILTERS.map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}>
             {s}
           </button>
         ))}
@@ -32,41 +34,68 @@ export default function QuoteListPage() {
         ) : quotes.length === 0 ? (
           <div className="p-8 text-center text-gray-400 text-sm">No quotes found.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                  <th className="px-6 py-3 font-medium">Customer</th>
-                  <th className="px-6 py-3 font-medium">Product Type</th>
-                  <th className="px-6 py-3 font-medium">Qty</th>
-                  <th className="px-6 py-3 font-medium">Budget</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium">Date</th>
-                  <th className="px-6 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {quotes.map(q => (
-                  <tr key={q.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">{q.user?.name || '—'}</p>
-                      <p className="text-xs text-gray-500">{q.user?.email}</p>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">{q.productType}</td>
-                    <td className="px-6 py-4 text-gray-600">{q.quantity.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-gray-600">{q.budgetRange || '—'}</td>
-                    <td className="px-6 py-4"><StatusBadge status={q.status} /></td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(q.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Link to={`/quotes/${q.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 inline-flex">
-                        <Eye size={15} />
-                      </Link>
-                    </td>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                    <th className="px-6 py-3 font-medium">Customer</th>
+                    <th className="px-6 py-3 font-medium">Product Type</th>
+                    <th className="px-6 py-3 font-medium">Qty</th>
+                    <th className="px-6 py-3 font-medium">Budget</th>
+                    <th className="px-6 py-3 font-medium">Status</th>
+                    <th className="px-6 py-3 font-medium">Date</th>
+                    <th className="px-6 py-3 font-medium"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {quotes.map(q => (
+                    <tr key={q.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{q.user?.name || '—'}</p>
+                        <p className="text-xs text-gray-500">{q.user?.email}</p>
+                      </td>
+                      <td className="px-6 py-4 text-gray-700">{q.productType}</td>
+                      <td className="px-6 py-4 text-gray-600">{(q.quantity ?? 0).toLocaleString()}</td>
+                      <td className="px-6 py-4 text-gray-600">{q.budgetRange || '—'}</td>
+                      <td className="px-6 py-4"><StatusBadge status={q.status} /></td>
+                      <td className="px-6 py-4 text-gray-500">{new Date(q.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link to={`/quotes/${q.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 inline-flex">
+                          <Eye size={15} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {quotes.map(q => (
+                <div key={q.id} className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">{q.user?.name || '—'}</p>
+                      <p className="text-xs text-gray-500">{q.user?.email}</p>
+                    </div>
+                    <Link to={`/quotes/${q.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 shrink-0">
+                      <Eye size={16} />
+                    </Link>
+                  </div>
+                  <p className="text-sm text-gray-700 mb-2">{q.productType}</p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <StatusBadge status={q.status} />
+                    <span className="text-xs text-gray-500">Qty: {(q.quantity ?? 0).toLocaleString()}</span>
+                    {q.budgetRange && <span className="text-xs text-gray-500">{q.budgetRange}</span>}
+                    <span className="text-xs text-gray-400 ml-auto">{new Date(q.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

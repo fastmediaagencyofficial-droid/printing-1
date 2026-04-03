@@ -1,52 +1,45 @@
-import { v2 as cloudinary } from 'cloudinary';
+import fs from 'fs';
+import path from 'path';
 import { logger } from '../utils/logger';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
+
+// Ensure uploads directory exists
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
 
 /**
- * Upload an image to Cloudinary. Accepts base64 string or Buffer.
- * Returns the secure URL.
+ * Save an image locally. Accepts base64 string or Buffer.
+ * Returns the URL path to access the image.
  */
 export const uploadImage = async (
   data: string | Buffer,
-  folder = 'fast-printing/payment-proofs'
+  folder = 'misc'
 ): Promise<string> => {
   try {
-    if (Buffer.isBuffer(data)) {
-      // Stream upload for Buffer (from multer memoryStorage)
-      return await new Promise<string>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder,
-            allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-            transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-          },
-          (error, result) => {
-            if (error || !result) { reject(error || new Error('Upload failed')); return; }
-            resolve(result.secure_url);
-          }
-        );
-        stream.end(data);
-      });
+    const folderPath = path.join(UPLOADS_DIR, folder);
+    if (!fs.existsSync(folderPath)) {
+      fs.mkdirSync(folderPath, { recursive: true });
     }
 
-    // Base64 string upload
-    const result = await cloudinary.uploader.upload(data, {
-      folder,
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-      max_bytes: 5 * 1024 * 1024,
-      transformation: [{ quality: 'auto', fetch_format: 'auto' }],
-    });
-    return result.secure_url;
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+    const filePath = path.join(folderPath, filename);
+
+    if (Buffer.isBuffer(data)) {
+      fs.writeFileSync(filePath, data);
+    } else {
+      // Strip base64 data URI prefix if present
+      const base64Data = data.replace(/^data:image\/\w+;base64,/, '');
+      fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+    }
+
+    const relativePath = path.join('uploads', folder, filename).replace(/\\/g, '/');
+    return `http://localhost:${process.env.PORT || 5000}/${relativePath}`;
   } catch (err) {
-    logger.error('Cloudinary upload failed:', err);
+    logger.error('Local image upload failed:', err);
     throw new Error('Image upload failed');
   }
 };
 
-export default cloudinary;
+export default { uploadImage };

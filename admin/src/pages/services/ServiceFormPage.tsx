@@ -57,15 +57,15 @@ export default function ServiceFormPage() {
     }
   };
 
-  if (!service) return <div className="p-8 text-gray-400 text-sm">Loading…</div>;
+  if (!service) return <div className="p-4 md:p-8 text-gray-400 text-sm">Loading…</div>;
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <button onClick={() => navigate('/services')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6">
         <ArrowLeft size={16} /> Back to Services
       </button>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Edit Service</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">Edit Service</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div>

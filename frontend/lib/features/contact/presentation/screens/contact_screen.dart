@@ -198,11 +198,11 @@ class _ContactScreenState extends State<ContactScreen> {
                     color: AppColors.white, size: 22),
               ),
               const SizedBox(width: 14),
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Our Office',
                       style: TextStyle(
                         fontFamily: 'Poppins',
@@ -211,7 +211,7 @@ class _ContactScreenState extends State<ContactScreen> {
                         color: AppColors.black,
                       ),
                     ),
-                    const Text(
+                    Text(
                       AppStrings.address,
                       style: TextStyle(
                         fontFamily: 'Inter',
@@ -340,15 +340,15 @@ class _ContactScreenState extends State<ContactScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.redBorder),
         ),
-        child: Row(
+        child: const Row(
           children: [
-            const Icon(Icons.access_time_rounded,
+            Icon(Icons.access_time_rounded,
                 color: AppColors.primaryRed, size: 22),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Business Hours',
                   style: TextStyle(
                     fontFamily: 'Poppins',
@@ -357,7 +357,7 @@ class _ContactScreenState extends State<ContactScreen> {
                     color: AppColors.black,
                   ),
                 ),
-                const Text(
+                Text(
                   AppStrings.businessHours,
                   style: TextStyle(
                     fontFamily: 'Inter',
@@ -365,7 +365,7 @@ class _ContactScreenState extends State<ContactScreen> {
                     color: AppColors.mediumGrey,
                   ),
                 ),
-                const Text(
+                Text(
                   'Sunday: Closed',
                   style: TextStyle(
                     fontFamily: 'Inter',
@@ -456,9 +456,9 @@ class _QuickContactBtn extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.07),
+          color: color.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

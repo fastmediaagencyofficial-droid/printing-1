@@ -12,8 +12,8 @@ export default function OrderDetailPage() {
   const statusMutation = useUpdateOrderStatus(id!);
   const paymentMutation = useVerifyPayment(id!);
 
-  if (isLoading) return <div className="p-8 text-gray-400 text-sm">Loading…</div>;
-  if (error || !order) return <div className="p-8 text-red-600 text-sm">Order not found.</div>;
+  if (isLoading) return <div className="p-4 md:p-8 text-gray-400 text-sm">Loading…</div>;
+  if (error || !order) return <div className="p-4 md:p-8 text-red-600 text-sm">Order not found.</div>;
 
   const handleStatusChange = (status: string) => {
     if (!confirm(`Change status to "${status}"?`)) return;
@@ -21,14 +21,14 @@ export default function OrderDetailPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl">
-      <button onClick={() => navigate('/orders')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6">
+    <div className="p-4 md:p-8 max-w-4xl">
+      <button onClick={() => navigate('/orders')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-5">
         <ArrowLeft size={16} /> Back to Orders
       </button>
 
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-5 gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Order {order.orderNumber}</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Order {order.orderNumber}</h1>
           <p className="text-sm text-gray-500 mt-1">{new Date(order.createdAt).toLocaleString()}</p>
         </div>
         <StatusBadge status={order.status} />
@@ -47,16 +47,16 @@ export default function OrderDetailPage() {
                   <div key={item.id} className="py-3 flex items-start justify-between gap-4">
                     <div>
                       <p className="font-medium text-gray-900 text-sm">{snapshot.name || 'Product'}</p>
-                      <p className="text-xs text-gray-500">Qty: {item.quantity} × ₨{item.unitPrice.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">Qty: {item.quantity} × ₨{(item.unitPrice ?? 0).toLocaleString()}</p>
                     </div>
-                    <p className="font-semibold text-sm">₨{item.totalPrice.toLocaleString()}</p>
+                    <p className="font-semibold text-sm">₨{(item.totalPrice ?? 0).toLocaleString()}</p>
                   </div>
                 );
               })}
             </div>
             <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between">
               <span className="font-semibold text-gray-900">Total</span>
-              <span className="font-bold text-lg">₨{order.totalAmount.toLocaleString()}</span>
+              <span className="font-bold text-lg">₨{(order.totalAmount ?? 0).toLocaleString()}</span>
             </div>
           </div>
 

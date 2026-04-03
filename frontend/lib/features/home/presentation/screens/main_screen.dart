@@ -18,11 +18,11 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<_NavItem> _navItems = [
-    _NavItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
-    _NavItem(label: 'Services', icon: Icons.build_outlined, activeIcon: Icons.build_rounded),
-    _NavItem(label: 'Products', icon: Icons.inventory_2_outlined, activeIcon: Icons.inventory_2_rounded),
-    _NavItem(label: 'Industries', icon: Icons.business_outlined, activeIcon: Icons.business_rounded),
-    _NavItem(label: 'Profile', icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded),
+    const _NavItem(label: 'Home', icon: Icons.home_outlined, activeIcon: Icons.home_rounded),
+    const _NavItem(label: 'Services', icon: Icons.build_outlined, activeIcon: Icons.build_rounded),
+    const _NavItem(label: 'Products', icon: Icons.inventory_2_outlined, activeIcon: Icons.inventory_2_rounded),
+    const _NavItem(label: 'Industries', icon: Icons.business_outlined, activeIcon: Icons.business_rounded),
+    const _NavItem(label: 'Profile', icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded),
   ];
 
   final List<String> _routes = [
@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
           color: AppColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),

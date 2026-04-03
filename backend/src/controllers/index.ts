@@ -20,6 +20,39 @@ import { logger } from '../utils/logger';
 //  AUTH
 // ════════════════════════════════════════════════════════════════════
 
+/** POST /auth/admin-login
+ *  Body: { email, password }
+ *  Checks against ADMIN_EMAIL / ADMIN_PASSWORD in .env, returns JWT.
+ */
+export const adminLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) { sendBadRequest(res, 'Email and password are required'); return; }
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+      sendError(res, 500, 'Admin credentials not configured');
+      return;
+    }
+
+    if (email !== adminEmail || password !== adminPassword) {
+      sendError(res, 401, 'Invalid email or password');
+      return;
+    }
+
+    const token = signToken({ userId: 'admin', email: adminEmail, role: 'ADMIN' });
+    sendSuccess(res, {
+      token,
+      user: { id: 'admin', email: adminEmail, displayName: 'Admin', role: 'ADMIN' },
+    });
+  } catch (err) {
+    logger.error('Admin login error:', err);
+    sendError(res, 500, 'Login failed');
+  }
+};
+
 /** POST /auth/google-login
  *  Body: { idToken: string }
  *  Verifies Google ID token, upserts user, returns our JWT.
@@ -700,9 +733,9 @@ export const adminGetProducts = async (req: AuthRequest, res: Response): Promise
 export const adminCreateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, slug, description, category, startingPrice, priceUnit, isActive, isFeatured, sortOrder, industries } = req.body;
-    if (!name || !slug || !description || !category) { sendBadRequest(res, 'name, slug, description, category required'); return; }
+    if (!name || !slug || !category) { sendBadRequest(res, 'name, slug, category required'); return; }
     const product = await prisma.product.create({
-      data: { name, slug, description, category, startingPrice: parseFloat(startingPrice || '0'),
+      data: { name, slug, description: description || '', category, startingPrice: parseFloat(startingPrice || '0'),
         priceUnit: priceUnit || 'custom quote', isActive: isActive !== false, isFeatured: isFeatured === true,
         sortOrder: parseInt(sortOrder || '0'), industries: industries || [] },
     });

@@ -17,7 +17,7 @@ const KEY = ['admin', 'users'];
 export function useUsers() {
   return useQuery<AdminUser[]>({
     queryKey: KEY,
-    queryFn: () => api.get('/admin/users').then(r => r.data.data),
+    queryFn: () => api.get('/admin/users', { params: { limit: 200 } }).then(r => r.data.data.users ?? r.data.data),
   });
 }
 

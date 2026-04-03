@@ -1,10 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_routes.dart';
+import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../bloc/wishlist_bloc.dart';
+
+String _fixImageUrl(String url) =>
+    url.replaceFirst('http://localhost:', 'http://10.0.2.2:');
 
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
@@ -17,49 +20,28 @@ class WishlistScreen extends StatelessWidget {
         title: const Text('My Wishlist'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
+          onPressed: () {
+            try {
+              context.pop();
+            } catch (_) {
+              context.go('/');
+            }
+          },
         ),
       ),
       body: BlocBuilder<WishlistBloc, WishlistState>(
         builder: (context, state) {
-          if (state is WishlistLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primaryRed),
-            );
-          }
-          if (state is WishlistError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline_rounded,
-                      size: 48, color: AppColors.softGrey),
-                  const SizedBox(height: 12),
-                  Text(state.message,
-                      style: const TextStyle(
-                          fontFamily: 'Inter', color: AppColors.mediumGrey)),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () =>
-                        context.read<WishlistBloc>().add(LoadWishlistEvent()),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
-          if (state is WishlistLoaded && state.items.isEmpty) {
-            return _EmptyWishlist();
-          }
-          if (state is WishlistLoaded) {
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.items.length,
-              itemBuilder: (context, index) =>
-                  _WishlistItemCard(item: state.items[index]),
-            );
-          }
-          return _EmptyWishlist();
+          final items =
+              state is WishlistLoaded ? state.items : <WishlistItemModel>[];
+
+          if (items.isEmpty) return _EmptyWishlist();
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: items.length,
+            itemBuilder: (context, index) =>
+                _WishlistItemCard(item: items[index]),
+          );
         },
       ),
     );
@@ -113,7 +95,8 @@ class _WishlistItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final product = item.product;
+    final imageUrl = item.imageUrl ?? '';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
@@ -129,32 +112,15 @@ class _WishlistItemCard extends StatelessWidget {
           // Product image
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: product.imageUrl != null
-                ? CachedNetworkImage(
-                    imageUrl: product.imageUrl!,
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+                    _fixImageUrl(imageUrl),
                     width: 80,
                     height: 80,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
-                      width: 80,
-                      height: 80,
-                      color: AppColors.lightGrey,
-                    ),
-                    errorWidget: (_, __, ___) => Container(
-                      width: 80,
-                      height: 80,
-                      color: AppColors.lightGrey,
-                      child: const Icon(Icons.image_not_supported_outlined,
-                          color: AppColors.softGrey),
-                    ),
+                    errorBuilder: (_, __, ___) => _placeholderImage(),
                   )
-                : Container(
-                    width: 80,
-                    height: 80,
-                    color: AppColors.lightGrey,
-                    child: const Icon(Icons.inventory_2_outlined,
-                        color: AppColors.primaryRed, size: 32),
-                  ),
+                : _placeholderImage(),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -165,7 +131,7 @@ class _WishlistItemCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        product.name,
+                        item.productName,
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 14,
@@ -174,7 +140,6 @@ class _WishlistItemCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Remove from wishlist
                     GestureDetector(
                       onTap: () => context
                           .read<WishlistBloc>()
@@ -186,7 +151,7 @@ class _WishlistItemCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  product.category,
+                  item.category,
                   style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -196,7 +161,9 @@ class _WishlistItemCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'PKR ${product.startingPrice.toStringAsFixed(0)}+',
+                      item.startingPrice > 0
+                          ? 'PKR ${item.startingPrice.toStringAsFixed(0)}+'
+                          : 'Custom Quote',
                       style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 14,
@@ -205,12 +172,19 @@ class _WishlistItemCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // Move to cart
                     OutlinedButton.icon(
                       onPressed: () {
+                        // Add to local cart
+                        context.read<CartBloc>().add(AddToCartEvent(
+                          productId: item.productId,
+                          productName: item.productName,
+                          unitPrice: item.startingPrice,
+                          quantity: 1,
+                        ));
+                        // Remove from wishlist
                         context
                             .read<WishlistBloc>()
-                            .add(MoveWishlistToCartEvent(item.productId));
+                            .add(RemoveFromWishlistEvent(item.productId));
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text('Moved to cart!'),
@@ -218,6 +192,11 @@ class _WishlistItemCard extends StatelessWidget {
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10)),
+                            action: SnackBarAction(
+                              label: 'View Cart',
+                              textColor: Colors.white,
+                              onPressed: () => context.push(AppRoutes.cart),
+                            ),
                           ),
                         );
                       },
@@ -239,4 +218,12 @@ class _WishlistItemCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _placeholderImage() => Container(
+        width: 80,
+        height: 80,
+        color: AppColors.lightGrey,
+        child: const Icon(Icons.inventory_2_outlined,
+            color: AppColors.primaryRed, size: 32),
+      );
 }

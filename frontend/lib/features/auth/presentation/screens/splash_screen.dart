@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_routes.dart';
-import '../../../../core/network/api_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -23,20 +21,8 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(milliseconds: 2400));
     if (!mounted) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final isFirst = prefs.getBool('is_first_launch') ?? true;
-
-    // Check if we have a saved JWT (previously logged in)
-    final loggedIn = await hasToken();
-
     if (!mounted) return;
-    if (isFirst) {
-      context.go(AppRoutes.onboarding);
-    } else if (loggedIn) {
-      context.go(AppRoutes.home);
-    } else {
-      context.go(AppRoutes.login);
-    }
+    context.go(AppRoutes.home);
   }
 
   @override

@@ -6,7 +6,7 @@ export interface AdminProduct {
   name: string;
   slug: string;
   description: string;
-  basePrice: number;
+  startingPrice: number;
   imageUrl: string | null;
   category: string;
   isActive: boolean;
@@ -19,7 +19,7 @@ const KEY = ['admin', 'products'];
 export function useProducts() {
   return useQuery<AdminProduct[]>({
     queryKey: KEY,
-    queryFn: () => api.get('/admin/products').then(r => r.data.data),
+    queryFn: () => api.get('/admin/products', { params: { limit: 200 } }).then(r => r.data.data.products ?? r.data.data),
   });
 }
 

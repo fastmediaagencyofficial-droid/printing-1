@@ -11,17 +11,19 @@ export default function OrderListPage() {
   const { data: orders = [], isLoading } = useOrders(statusFilter === 'ALL' ? undefined : statusFilter);
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <p className="text-sm text-gray-500 mt-1">{orders.length} orders</p>
+    <div className="p-4 md:p-8">
+      <div className="mb-5">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Orders</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{orders.length} orders</p>
       </div>
 
-      {/* Status filter tabs */}
-      <div className="flex gap-2 flex-wrap mb-4">
+      {/* Status filter chips */}
+      <div className="flex gap-2 flex-wrap mb-4 overflow-x-auto pb-1">
         {STATUS_FILTERS.map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${
+              statusFilter === s ? 'bg-primary text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}>
             {s === 'ALL' ? 'All' : s.replace(/_/g, ' ')}
           </button>
         ))}
@@ -33,46 +35,76 @@ export default function OrderListPage() {
         ) : orders.length === 0 ? (
           <div className="p-8 text-center text-gray-400 text-sm">No orders found.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                  <th className="px-6 py-3 font-medium">Order #</th>
-                  <th className="px-6 py-3 font-medium">Customer</th>
-                  <th className="px-6 py-3 font-medium">Amount</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium">Payment Proof</th>
-                  <th className="px-6 py-3 font-medium">Date</th>
-                  <th className="px-6 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {orders.map(order => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-mono text-xs text-gray-600">{order.orderNumber}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-gray-900">{order.customer?.name || '—'}</p>
-                      <p className="text-xs text-gray-500">{order.customer?.email}</p>
-                    </td>
-                    <td className="px-6 py-4 font-medium">₨{order.totalAmount.toLocaleString()}</td>
-                    <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                    <td className="px-6 py-4">
-                      {order.paymentProofUrl ? (
-                        <a href={order.paymentProofUrl} target="_blank" rel="noreferrer"
-                          className="text-primary hover:underline text-xs">View proof</a>
-                      ) : <span className="text-gray-400 text-xs">None</span>}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Link to={`/orders/${order.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 inline-flex">
-                        <Eye size={15} />
-                      </Link>
-                    </td>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                    <th className="px-6 py-3 font-medium">Order #</th>
+                    <th className="px-6 py-3 font-medium">Customer</th>
+                    <th className="px-6 py-3 font-medium">Amount</th>
+                    <th className="px-6 py-3 font-medium">Status</th>
+                    <th className="px-6 py-3 font-medium">Payment Proof</th>
+                    <th className="px-6 py-3 font-medium">Date</th>
+                    <th className="px-6 py-3 font-medium"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {orders.map(order => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-mono text-xs text-gray-600">{order.orderNumber}</td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{order.customer?.name || '—'}</p>
+                        <p className="text-xs text-gray-500">{order.customer?.email}</p>
+                      </td>
+                      <td className="px-6 py-4 font-medium">₨{(order.totalAmount ?? 0).toLocaleString()}</td>
+                      <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
+                      <td className="px-6 py-4">
+                        {order.paymentProofUrl ? (
+                          <a href={order.paymentProofUrl} target="_blank" rel="noreferrer"
+                            className="text-primary hover:underline text-xs">View proof</a>
+                        ) : <span className="text-gray-400 text-xs">None</span>}
+                      </td>
+                      <td className="px-6 py-4 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 text-right">
+                        <Link to={`/orders/${order.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 inline-flex">
+                          <Eye size={15} />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {orders.map(order => (
+                <div key={order.id} className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div>
+                      <p className="font-mono text-xs text-gray-500">{order.orderNumber}</p>
+                      <p className="font-medium text-gray-900 text-sm">{order.customer?.name || '—'}</p>
+                      <p className="text-xs text-gray-500">{order.customer?.email}</p>
+                    </div>
+                    <Link to={`/orders/${order.id}`} className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 shrink-0">
+                      <Eye size={16} />
+                    </Link>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 mt-2 flex-wrap">
+                    <span className="font-semibold text-sm text-gray-900">₨{(order.totalAmount ?? 0).toLocaleString()}</span>
+                    <StatusBadge status={order.status} />
+                    <span className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  {order.paymentProofUrl && (
+                    <a href={order.paymentProofUrl} target="_blank" rel="noreferrer"
+                      className="mt-2 inline-block text-primary hover:underline text-xs">View payment proof</a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

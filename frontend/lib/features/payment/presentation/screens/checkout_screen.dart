@@ -85,7 +85,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   groupValue: _paymentMethod,
                   label: 'JazzCash',
                   icon: Icons.phone_android_rounded,
-                  onChanged: (v) => setState(() => _paymentMethod = v!),
+                  onTap: () => setState(() => _paymentMethod = 'JAZZCASH'),
                 ),
                 const SizedBox(height: 8),
                 _PaymentMethodTile(
@@ -93,7 +93,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   groupValue: _paymentMethod,
                   label: 'EasyPaisa',
                   icon: Icons.account_balance_wallet_rounded,
-                  onChanged: (v) => setState(() => _paymentMethod = v!),
+                  onTap: () => setState(() => _paymentMethod = 'EASYPAISA'),
                 ),
 
                 const SizedBox(height: 24),
@@ -264,17 +264,17 @@ class _PaymentMethodTile extends StatelessWidget {
     required this.groupValue,
     required this.label,
     required this.icon,
-    required this.onChanged,
+    required this.onTap,
   });
   final String value, groupValue, label;
   final IconData icon;
-  final ValueChanged<String?> onChanged;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final selected = value == groupValue;
     return GestureDetector(
-      onTap: () => onChanged(value),
+      onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -298,11 +298,28 @@ class _PaymentMethodTile extends StatelessWidget {
                     fontSize: 14,
                     color: selected ? AppColors.primaryRed : AppColors.black)),
             const Spacer(),
-            Radio<String>(
-              value: value,
-              groupValue: groupValue,
-              onChanged: onChanged,
-              activeColor: AppColors.primaryRed,
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? AppColors.primaryRed : AppColors.softGrey,
+                  width: 2,
+                ),
+              ),
+              child: selected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primaryRed,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
           ],
         ),

@@ -36,10 +36,10 @@ class OrderConfirmationScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: AppColors.lightGrey, borderRadius: BorderRadius.circular(14)),
-                child: Row(children: [
-                  const Icon(Icons.info_outline_rounded, color: AppColors.primaryRed, size: 20),
-                  const SizedBox(width: 10),
-                  const Expanded(child: Text('You\'ll receive a push notification once your payment is confirmed.', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.darkGrey, height: 1.4))),
+                child: const Row(children: [
+                  Icon(Icons.info_outline_rounded, color: AppColors.primaryRed, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('You\'ll receive a push notification once your payment is confirmed.', style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.darkGrey, height: 1.4))),
                 ]),
               ).animate(delay: 600.ms).fadeIn(),
               const SizedBox(height: 32),

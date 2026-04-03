@@ -50,7 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_first_launch', false);
     if (!mounted) return;
-    context.go(AppRoutes.login);
+    context.go(AppRoutes.home);
   }
 
   @override

@@ -1,95 +1,102 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_service.dart';
-import '../../../products/data/models/product_model.dart';
+
+// ── Model ─────────────────────────────────────────────────────────────────────
 
 class WishlistItemModel {
-  final String id;
   final String productId;
-  final ProductModel product;
-  const WishlistItemModel({required this.id, required this.productId, required this.product});
-  factory WishlistItemModel.fromJson(Map<String, dynamic> json) => WishlistItemModel(
-        id: json['id'] as String,
-        productId: json['productId'] as String,
-        product: ProductModel.fromJson(json['product'] as Map<String, dynamic>),
-      );
+  final String productName;
+  final String category;
+  final double startingPrice;
+  final String? imageUrl;
+
+  const WishlistItemModel({
+    required this.productId,
+    required this.productName,
+    required this.category,
+    required this.startingPrice,
+    this.imageUrl,
+  });
 }
 
+// ── Events ────────────────────────────────────────────────────────────────────
+
 abstract class WishlistEvent {}
+
 class LoadWishlistEvent extends WishlistEvent {}
+
 class AddToWishlistEvent extends WishlistEvent {
   final String productId;
-  AddToWishlistEvent(this.productId);
+  final String productName;
+  final String category;
+  final double startingPrice;
+  final String? imageUrl;
+
+  AddToWishlistEvent({
+    required this.productId,
+    required this.productName,
+    required this.category,
+    required this.startingPrice,
+    this.imageUrl,
+  });
 }
+
 class RemoveFromWishlistEvent extends WishlistEvent {
   final String productId;
   RemoveFromWishlistEvent(this.productId);
 }
-class MoveWishlistToCartEvent extends WishlistEvent {
-  final String productId;
-  MoveWishlistToCartEvent(this.productId);
-}
+
+class ClearWishlistEvent extends WishlistEvent {}
+
+// ── States ────────────────────────────────────────────────────────────────────
 
 abstract class WishlistState {}
+
 class WishlistInitial extends WishlistState {}
-class WishlistLoading extends WishlistState {}
+
 class WishlistLoaded extends WishlistState {
   final List<WishlistItemModel> items;
   WishlistLoaded(this.items);
-}
-class WishlistError extends WishlistState {
-  final String message;
-  WishlistError(this.message);
+  bool contains(String productId) => items.any((i) => i.productId == productId);
 }
 
+// ── BLoC (in-memory, no auth required) ───────────────────────────────────────
+
 class WishlistBloc extends Bloc<WishlistEvent, WishlistState> {
-  WishlistBloc() : super(WishlistInitial()) {
+  WishlistBloc() : super(WishlistLoaded(const [])) {
     on<LoadWishlistEvent>(_onLoad);
     on<AddToWishlistEvent>(_onAdd);
     on<RemoveFromWishlistEvent>(_onRemove);
-    on<MoveWishlistToCartEvent>(_onMove);
+    on<ClearWishlistEvent>(_onClear);
   }
 
-  final _dio = ApiService.instance.dio;
+  List<WishlistItemModel> get _items =>
+      state is WishlistLoaded ? (state as WishlistLoaded).items : [];
 
-  Future<void> _onLoad(LoadWishlistEvent event, Emitter<WishlistState> emit) async {
-    emit(WishlistLoading());
-    try {
-      final res = await _dio.get(ApiConstants.wishlist);
-      final items = (res.data['data']['items'] as List<dynamic>)
-          .map((e) => WishlistItemModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      emit(WishlistLoaded(items));
-    } on DioException catch (e) {
-      emit(WishlistError(e.response?.data?['error'] ?? 'Failed to load wishlist'));
-    }
+  void _onLoad(LoadWishlistEvent event, Emitter<WishlistState> emit) {
+    emit(WishlistLoaded(List.from(_items)));
   }
 
-  Future<void> _onAdd(AddToWishlistEvent event, Emitter<WishlistState> emit) async {
-    try {
-      await _dio.post(ApiConstants.wishlistAdd, data: {'productId': event.productId});
-      add(LoadWishlistEvent());
-    } on DioException catch (e) {
-      emit(WishlistError(e.response?.data?['error'] ?? 'Failed to add to wishlist'));
-    }
+  void _onAdd(AddToWishlistEvent event, Emitter<WishlistState> emit) {
+    // Avoid duplicates
+    if (_items.any((i) => i.productId == event.productId)) return;
+    final updated = List<WishlistItemModel>.from(_items)
+      ..add(WishlistItemModel(
+        productId: event.productId,
+        productName: event.productName,
+        category: event.category,
+        startingPrice: event.startingPrice,
+        imageUrl: event.imageUrl,
+      ));
+    emit(WishlistLoaded(updated));
   }
 
-  Future<void> _onRemove(RemoveFromWishlistEvent event, Emitter<WishlistState> emit) async {
-    try {
-      await _dio.delete(ApiConstants.wishlistRemove(event.productId));
-      add(LoadWishlistEvent());
-    } on DioException catch (e) {
-      emit(WishlistError(e.response?.data?['error'] ?? 'Failed to remove from wishlist'));
-    }
+  void _onRemove(RemoveFromWishlistEvent event, Emitter<WishlistState> emit) {
+    final updated = List<WishlistItemModel>.from(_items)
+      ..removeWhere((i) => i.productId == event.productId);
+    emit(WishlistLoaded(updated));
   }
 
-  Future<void> _onMove(MoveWishlistToCartEvent event, Emitter<WishlistState> emit) async {
-    try {
-      await _dio.post(ApiConstants.wishlistMoveToCart(event.productId), data: {'quantity': 1});
-      add(LoadWishlistEvent());
-    } on DioException catch (e) {
-      emit(WishlistError(e.response?.data?['error'] ?? 'Failed to move to cart'));
-    }
+  void _onClear(ClearWishlistEvent event, Emitter<WishlistState> emit) {
+    emit(WishlistLoaded(const []));
   }
 }

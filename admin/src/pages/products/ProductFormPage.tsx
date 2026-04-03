@@ -5,13 +5,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft } from 'lucide-react';
 import { useProducts, useCreateProduct, useUpdateProduct, useUploadProductImage } from '../../hooks/useProducts';
+import { api } from '../../services/api';
 import ImageUpload from '../../components/ImageUpload';
 
 const schema = z.object({
   name: z.string().min(2, 'Name required'),
   slug: z.string().min(2, 'Slug required'),
   description: z.string().optional(),
-  basePrice: z.coerce.number().min(0),
+  startingPrice: z.coerce.number().min(0),
   category: z.string().min(1, 'Category required'),
   isActive: z.boolean(),
   isFeatured: z.boolean(),
@@ -44,7 +45,7 @@ export default function ProductFormPage() {
       name: product.name,
       slug: product.slug,
       description: product.description,
-      basePrice: product.basePrice,
+      startingPrice: product.startingPrice,
       category: product.category,
       isActive: product.isActive,
       isFeatured: product.isFeatured,
@@ -62,34 +63,32 @@ export default function ProductFormPage() {
         if (pendingFile && created?.id) {
           const fd = new FormData();
           fd.append('image', pendingFile);
-          // Upload after creation using the new id — handled by parent
+          await api.post(`/admin/products/${created.id}/image`, fd);
         }
       }
       navigate('/products');
     } catch (e: any) {
-      setServerError(e.response?.data?.error || 'Failed to save product');
+      setServerError(e.response?.data?.message || e.response?.data?.error || 'Failed to save product');
     }
   };
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 md:p-8 max-w-2xl">
       <button onClick={() => navigate('/products')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6">
         <ArrowLeft size={16} /> Back to Products
       </button>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
+      <h1 className="text-xl md:text-2xl font-bold text-gray-900 mb-6">{isEdit ? 'Edit Product' : 'Add Product'}</h1>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {isEdit && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-            <ImageUpload
-              currentUrl={product?.imageUrl}
-              onUpload={setPendingFile}
-              isUploading={uploadMutation.isPending}
-            />
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+          <ImageUpload
+            currentUrl={product?.imageUrl}
+            onUpload={setPendingFile}
+            isUploading={uploadMutation.isPending}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -112,10 +111,10 @@ export default function ProductFormPage() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Base Price (PKR) *</label>
-            <input {...register('basePrice')} type="number" min="0" step="1"
+            <label className="block text-sm font-medium text-gray-700 mb-1">Starting Price (PKR) *</label>
+            <input {...register('startingPrice')} type="number" min="0" step="1"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary" />
-            {errors.basePrice && <p className="text-xs text-red-600 mt-1">{errors.basePrice.message}</p>}
+            {errors.startingPrice && <p className="text-xs text-red-600 mt-1">{errors.startingPrice.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>

@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../bloc/product_bloc.dart';
+import '../../data/models/product_model.dart';
+
+/// Converts a backend image URL so it works on the Android emulator.
+/// Backend stores http://localhost:5000/... but emulator needs http://10.0.2.2:5000/...
+String _fixImageUrl(String url) =>
+    url.replaceFirst('http://localhost:', 'http://10.0.2.2:');
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -13,45 +21,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
   String _selectedCategory = 'All';
   String _searchQuery = '';
   bool _isGridView = true;
+  final _searchController = TextEditingController();
 
-  final List<String> _categories = [
-    'All', 'Business Printing', 'Marketing', 'Packaging',
-    'Large Format', 'Speciality', 'Labels',
-  ];
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
-  final List<_Product> _allProducts = [
-    _Product(id: '1', name: 'Business Cards', category: 'Business Printing', startingPrice: 1500, icon: Icons.credit_card_rounded),
-    _Product(id: '2', name: 'Brochures', category: 'Marketing', startingPrice: 2500, icon: Icons.menu_book_rounded),
-    _Product(id: '3', name: 'Flyers', category: 'Marketing', startingPrice: 800, icon: Icons.article_rounded),
-    _Product(id: '4', name: 'Posters', category: 'Large Format', startingPrice: 1200, icon: Icons.image_rounded),
-    _Product(id: '5', name: 'Banners', category: 'Large Format', startingPrice: 2000, icon: Icons.panorama_rounded),
-    _Product(id: '6', name: 'Custom Boxes', category: 'Packaging', startingPrice: 0, isCustomQuote: true, icon: Icons.inventory_rounded),
-    _Product(id: '7', name: 'Stickers and Labels', category: 'Labels', startingPrice: 500, icon: Icons.label_rounded),
-    _Product(id: '8', name: 'Letterheads', category: 'Business Printing', startingPrice: 1200, icon: Icons.description_rounded),
-    _Product(id: '9', name: 'Envelopes', category: 'Business Printing', startingPrice: 900, icon: Icons.mail_rounded),
-    _Product(id: '10', name: 'Presentation Folders', category: 'Business Printing', startingPrice: 3500, icon: Icons.folder_rounded),
-    _Product(id: '11', name: 'Catalogs', category: 'Marketing', startingPrice: 5000, icon: Icons.collections_bookmark_rounded),
-    _Product(id: '12', name: 'Roll-Up Banners', category: 'Large Format', startingPrice: 3500, icon: Icons.filter_rounded),
-    _Product(id: '13', name: 'Window Graphics', category: 'Large Format', startingPrice: 0, isCustomQuote: true, icon: Icons.window_rounded),
-    _Product(id: '14', name: 'Wall Graphics', category: 'Large Format', startingPrice: 0, isCustomQuote: true, icon: Icons.wallpaper_rounded),
-    _Product(id: '15', name: 'Shopping Bags', category: 'Packaging', startingPrice: 2000, icon: Icons.shopping_bag_rounded),
-    _Product(id: '16', name: 'Food Packaging', category: 'Packaging', startingPrice: 0, isCustomQuote: true, icon: Icons.fastfood_rounded),
-    _Product(id: '17', name: 'Wedding Cards', category: 'Speciality', startingPrice: 5000, icon: Icons.favorite_rounded),
-    _Product(id: '18', name: 'Calendars', category: 'Speciality', startingPrice: 1800, icon: Icons.calendar_month_rounded),
-    _Product(id: '19', name: 'Notepads', category: 'Business Printing', startingPrice: 1500, icon: Icons.note_rounded),
-    _Product(id: '20', name: 'Certificates', category: 'Speciality', startingPrice: 2500, icon: Icons.workspace_premium_rounded),
-    _Product(id: '21', name: 'Tissue Papers', category: 'Packaging', startingPrice: 3000, icon: Icons.spa_rounded),
-    _Product(id: '22', name: 'Bill Books', category: 'Business Printing', startingPrice: 1200, icon: Icons.receipt_long_rounded),
-    _Product(id: '23', name: 'Flag Printing', category: 'Large Format', startingPrice: 0, isCustomQuote: true, icon: Icons.flag_rounded),
-  ];
-
-  List<_Product> get _filteredProducts {
-    return _allProducts.where((p) {
-      final matchesCategory = _selectedCategory == 'All' || p.category == _selectedCategory;
-      final matchesSearch = _searchQuery.isEmpty ||
-          p.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    }).toList();
+  void _applyFilter() {
+    context.read<ProductBloc>().add(LoadProductsEvent(
+      category: _selectedCategory == 'All' ? null : _selectedCategory,
+      search: _searchQuery.isEmpty ? null : _searchQuery,
+    ));
   }
 
   @override
@@ -72,83 +54,123 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: TextField(
-              onChanged: (v) => setState(() => _searchQuery = v),
-              decoration: InputDecoration(
-                hintText: 'Search products...',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryRed),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded),
-                        onPressed: () => setState(() => _searchQuery = ''),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-          // Category filter chips
-          SizedBox(
-            height: 52,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemCount: _categories.length,
-              itemBuilder: (_, i) {
-                final cat = _categories[i];
-                final isSelected = _selectedCategory == cat;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: FilterChip(
-                    label: Text(cat),
-                    selected: isSelected,
-                    onSelected: (_) => setState(() => _selectedCategory = cat),
-                    selectedColor: AppColors.primaryRed,
-                    backgroundColor: AppColors.lightGrey,
-                    checkmarkColor: Colors.white,
-                    labelStyle: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected ? Colors.white : AppColors.black,
-                    ),
-                    side: BorderSide(
-                      color: isSelected ? AppColors.primaryRed : AppColors.borderGrey,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          // Results count
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Row(
-              children: [
-                Text(
-                  '${_filteredProducts.length} products',
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: AppColors.mediumGrey,
+      body: BlocBuilder<ProductBloc, ProductState>(
+        builder: (context, state) {
+          final products = state is ProductsLoaded ? state.products : <ProductModel>[];
+          final categories = state is ProductsLoaded ? state.categories : <CategoryModel>[];
+          final isLoading = state is ProductsLoading;
+          final error = state is ProductError ? state.message : null;
+
+          // Build category name list (All + names from API)
+          final categoryNames = ['All', ...categories.map((c) => c.name)];
+
+          // Client-side filter (in case BLoC returned broader results)
+          final filtered = products.where((p) {
+            final matchesCat = _selectedCategory == 'All' || p.category == _selectedCategory;
+            final matchesSearch = _searchQuery.isEmpty ||
+                p.name.toLowerCase().contains(_searchQuery.toLowerCase());
+            return matchesCat && matchesSearch;
+          }).toList();
+
+          return Column(
+            children: [
+              // Search bar
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (v) {
+                    setState(() => _searchQuery = v);
+                    if (v.isEmpty) _applyFilter();
+                  },
+                  onSubmitted: (_) => _applyFilter(),
+                  decoration: InputDecoration(
+                    hintText: 'Search products...',
+                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryRed),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                              _applyFilter();
+                            },
+                          )
+                        : null,
                   ),
                 ),
-              ],
-            ),
-          ),
-          // Product grid/list
-          Expanded(
-            child: _filteredProducts.isEmpty
-                ? _buildEmpty()
-                : _isGridView
-                    ? _buildGrid()
-                    : _buildList(),
-          ),
-        ],
+              ),
+              // Category filter chips
+              SizedBox(
+                height: 52,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  itemCount: categoryNames.length,
+                  itemBuilder: (_, i) {
+                    final cat = categoryNames[i];
+                    final isSelected = _selectedCategory == cat;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: FilterChip(
+                        label: Text(cat),
+                        selected: isSelected,
+                        onSelected: (_) {
+                          setState(() => _selectedCategory = cat);
+                          _applyFilter();
+                        },
+                        selectedColor: AppColors.primaryRed,
+                        backgroundColor: AppColors.lightGrey,
+                        checkmarkColor: Colors.white,
+                        labelStyle: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected ? Colors.white : AppColors.black,
+                        ),
+                        side: BorderSide(
+                          color: isSelected ? AppColors.primaryRed : AppColors.borderGrey,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              // Results count
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Row(
+                  children: [
+                    Text(
+                      isLoading ? 'Loading...' : '${filtered.length} products',
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.mediumGrey,
+                      ),
+                    ),
+                    if (error != null) ...[
+                      const SizedBox(width: 8),
+                      Text(error,
+                          style: const TextStyle(
+                              fontFamily: 'Inter', fontSize: 12, color: AppColors.primaryRed)),
+                    ],
+                  ],
+                ),
+              ),
+              // Content
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.primaryRed))
+                    : filtered.isEmpty
+                        ? _buildEmpty()
+                        : _isGridView
+                            ? _buildGrid(filtered)
+                            : _buildList(filtered),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -165,7 +187,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
             style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w600),
           ),
           TextButton(
-            onPressed: () => setState(() { _searchQuery = ''; _selectedCategory = 'All'; }),
+            onPressed: () {
+              _searchController.clear();
+              setState(() { _searchQuery = ''; _selectedCategory = 'All'; });
+              _applyFilter();
+            },
             child: const Text('Clear filters'),
           ),
         ],
@@ -173,7 +199,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
-  Widget _buildGrid() {
+  Widget _buildGrid(List<ProductModel> products) {
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -182,35 +208,37 @@ class _ProductsScreenState extends State<ProductsScreen> {
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
-      itemCount: _filteredProducts.length,
-      itemBuilder: (_, i) => _ProductCard(
-        product: _filteredProducts[i],
-        index: i,
-      ),
+      itemCount: products.length,
+      itemBuilder: (_, i) => _ProductCard(product: products[i], index: i),
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList(List<ProductModel> products) {
     return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      itemCount: _filteredProducts.length,
-      itemBuilder: (_, i) => _ProductListTile(
-        product: _filteredProducts[i],
-        index: i,
-      ),
+      itemCount: products.length,
+      itemBuilder: (_, i) => _ProductListTile(product: products[i], index: i),
     );
   }
 }
 
+// ── Product Card (grid) ───────────────────────────────────────────────────────
+
 class _ProductCard extends StatelessWidget {
   const _ProductCard({required this.product, required this.index});
-  final _Product product;
+  final ProductModel product;
   final int index;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/products/${product.id}'),
+      onTap: () => context.push('/products/${product.id}', extra: {
+        'name': product.name,
+        'category': product.category,
+        'startingPrice': product.startingPrice.toInt(),
+        'isCustomQuote': product.startingPrice == 0,
+        'imageUrl': product.displayImage,
+      }),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.white,
@@ -224,16 +252,31 @@ class _ProductCard extends StatelessWidget {
             // Image area
             Container(
               height: 110,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.lightGrey,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Stack(
                 children: [
                   Center(
-                    child: Icon(product.icon, size: 48, color: AppColors.primaryRed),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      child: product.displayImage.isNotEmpty
+                          ? Image.network(
+                              _fixImageUrl(product.displayImage),
+                              width: double.infinity,
+                              height: 110,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.inventory_2_rounded,
+                                  size: 48,
+                                  color: AppColors.primaryRed),
+                            )
+                          : const Icon(Icons.inventory_2_rounded,
+                              size: 48, color: AppColors.primaryRed),
+                    ),
                   ),
-                  if (product.isCustomQuote)
+                  if (product.startingPrice == 0)
                     Positioned(
                       top: 8,
                       left: 8,
@@ -270,9 +313,9 @@ class _ProductCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    product.isCustomQuote
+                    product.startingPrice == 0
                         ? 'Custom Quote'
-                        : 'From PKR ${product.startingPrice}',
+                        : 'From PKR ${product.startingPrice.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
@@ -289,7 +332,7 @@ class _ProductCard extends StatelessWidget {
                     ),
                     child: const Center(
                       child: Text(
-                        'Add to Cart',
+                        'View Details',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 11,
@@ -312,15 +355,23 @@ class _ProductCard extends StatelessWidget {
   }
 }
 
+// ── Product List Tile ─────────────────────────────────────────────────────────
+
 class _ProductListTile extends StatelessWidget {
   const _ProductListTile({required this.product, required this.index});
-  final _Product product;
+  final ProductModel product;
   final int index;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => context.push('/products/${product.id}'),
+      onTap: () => context.push('/products/${product.id}', extra: {
+        'name': product.name,
+        'category': product.category,
+        'startingPrice': product.startingPrice.toInt(),
+        'isCustomQuote': product.startingPrice == 0,
+        'imageUrl': product.displayImage,
+      }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
@@ -339,7 +390,22 @@ class _ProductListTile extends StatelessWidget {
                 color: AppColors.lightGrey,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(product.icon, color: AppColors.primaryRed, size: 30),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: product.displayImage.isNotEmpty
+                    ? Image.network(
+                        _fixImageUrl(product.displayImage),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                            Icons.inventory_2_rounded,
+                            color: AppColors.primaryRed,
+                            size: 30),
+                      )
+                    : const Icon(Icons.inventory_2_rounded,
+                        color: AppColors.primaryRed, size: 30),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -355,7 +421,9 @@ class _ProductListTile extends StatelessWidget {
                         fontFamily: 'Inter', fontSize: 12, color: AppColors.mediumGrey),
                   ),
                   Text(
-                    product.isCustomQuote ? 'Custom Quote' : 'From PKR ${product.startingPrice}',
+                    product.startingPrice == 0
+                        ? 'Custom Quote'
+                        : 'From PKR ${product.startingPrice.toStringAsFixed(0)}',
                     style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 13,
@@ -374,19 +442,4 @@ class _ProductListTile extends StatelessWidget {
         .fadeIn()
         .slideX(begin: 0.1);
   }
-}
-
-class _Product {
-  final String id, name, category;
-  final int startingPrice;
-  final bool isCustomQuote;
-  final IconData icon;
-  const _Product({
-    required this.id,
-    required this.name,
-    required this.category,
-    required this.startingPrice,
-    this.isCustomQuote = false,
-    required this.icon,
-  });
 }

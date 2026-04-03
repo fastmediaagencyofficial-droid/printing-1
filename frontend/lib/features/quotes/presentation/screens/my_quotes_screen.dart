@@ -93,7 +93,7 @@ class _EmptyQuotes extends StatelessWidget {
             Container(
               width: 100,
               height: 100,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.redSurface,
                 shape: BoxShape.circle,
               ),

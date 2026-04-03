@@ -34,6 +34,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// ── Static files (local image uploads) ───────────────────────────────────────
+app.use('/uploads', (_req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static('uploads'));
+
 // ── Core middleware ───────────────────────────────────────────────────────────
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));

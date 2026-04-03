@@ -3,15 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/products/presentation/bloc/product_bloc.dart';
 import 'features/services/presentation/bloc/service_bloc.dart';
 import 'features/cart/presentation/bloc/cart_bloc.dart';
 import 'features/wishlist/presentation/bloc/wishlist_bloc.dart';
 import 'features/industries/presentation/cubit/industry_cubit.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
-import 'features/auth/presentation/screens/onboarding_screen.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/home/presentation/screens/main_screen.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/products/presentation/screens/products_screen.dart';
@@ -39,8 +36,7 @@ class FastPrintingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => di.sl<AuthBloc>()..add(CheckAuthStatusEvent())),
-        BlocProvider(create: (_) => di.sl<CartBloc>()..add(LoadCartEvent())),
+        BlocProvider(create: (_) => di.sl<CartBloc>()),
         BlocProvider(create: (_) => di.sl<WishlistBloc>()),
         BlocProvider(create: (_) => di.sl<ProductBloc>()..add(LoadProductsEvent())),
         BlocProvider(create: (_) => di.sl<ServiceBloc>()..add(LoadServicesEvent())),
@@ -60,10 +56,8 @@ final GoRouter _router = GoRouter(
   navigatorKey: navigatorKey,
   initialLocation: AppRoutes.splash,
   routes: [
-    // ── Auth flow ─────────────────────────────────────────────────────────
-    GoRoute(path: AppRoutes.splash,      builder: (_, __) => const SplashScreen()),
-    GoRoute(path: AppRoutes.onboarding,  builder: (_, __) => const OnboardingScreen()),
-    GoRoute(path: AppRoutes.login,       builder: (_, __) => const LoginScreen()),
+    // ── Splash ────────────────────────────────────────────────────────────
+    GoRoute(path: AppRoutes.splash, builder: (_, __) => const SplashScreen()),
 
     // ── Main shell (bottom nav) ───────────────────────────────────────────
     ShellRoute(
@@ -80,8 +74,10 @@ final GoRouter _router = GoRouter(
     // ── Detail screens ────────────────────────────────────────────────────
     GoRoute(
       path: AppRoutes.productDetail,
-      builder: (ctx, state) =>
-          ProductDetailScreen(productId: state.pathParameters['id']!),
+      builder: (ctx, state) => ProductDetailScreen(
+        productId: state.pathParameters['id']!,
+        productData: state.extra as Map<String, dynamic>?,
+      ),
     ),
     GoRoute(
       path: AppRoutes.serviceDetail,

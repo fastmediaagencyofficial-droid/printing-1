@@ -42,7 +42,7 @@ class PortfolioScreen extends StatelessWidget {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.primaryRed.withOpacity(0.1),
+                      color: AppColors.primaryRed.withValues(alpha: 0.1),
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                     ),
                     child: const Center(child: Icon(Icons.image_rounded, size: 48, color: AppColors.primaryRed)),

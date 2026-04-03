@@ -1,7 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
-import '../../../../core/constants/api_constants.dart';
-import '../../../../core/network/api_service.dart';
 import '../../data/models/cart_model.dart';
 
 // ── Events ────────────────────────────────────────────────────────────────────
@@ -12,10 +9,19 @@ class LoadCartEvent extends CartEvent {}
 
 class AddToCartEvent extends CartEvent {
   final String productId;
+  final String productName;
   final int quantity;
+  final double unitPrice;
   final Map<String, dynamic>? customSpecs;
   final String? note;
-  AddToCartEvent({required this.productId, this.quantity = 1, this.customSpecs, this.note});
+  AddToCartEvent({
+    required this.productId,
+    required this.productName,
+    required this.unitPrice,
+    this.quantity = 1,
+    this.customSpecs,
+    this.note,
+  });
 }
 
 class UpdateCartItemEvent extends CartEvent {
@@ -51,10 +57,10 @@ class CartError extends CartState {
   CartError(this.message);
 }
 
-// ── BLoC ──────────────────────────────────────────────────────────────────────
+// ── BLoC (in-memory, no auth required) ───────────────────────────────────────
 
 class CartBloc extends Bloc<CartEvent, CartState> {
-  CartBloc() : super(CartInitial()) {
+  CartBloc() : super(CartLoaded(cartItems: const [], total: 0)) {
     on<LoadCartEvent>(_onLoad);
     on<AddToCartEvent>(_onAdd);
     on<UpdateCartItemEvent>(_onUpdate);
@@ -62,60 +68,88 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<ClearCartEvent>(_onClear);
   }
 
-  final _dio = ApiService.instance.dio;
+  List<CartItemModel> get _currentItems =>
+      state is CartLoaded ? (state as CartLoaded).cartItems : [];
 
-  Future<void> _onLoad(LoadCartEvent event, Emitter<CartState> emit) async {
-    emit(CartLoading());
-    try {
-      final res = await _dio.get(ApiConstants.cart);
-      final data = res.data['data'] as Map<String, dynamic>;
-      final cart = CartModel.fromJson(data);
-      emit(CartLoaded(cartItems: cart.items, total: cart.total));
-    } on DioException catch (e) {
-      emit(CartError(e.response?.data?['error'] ?? 'Failed to load cart'));
-    } catch (_) {
-      emit(CartError('Failed to load cart'));
-    }
+  double _calcTotal(List<CartItemModel> items) =>
+      items.fold(0, (sum, i) => sum + i.totalPrice);
+
+  void _emitItems(List<CartItemModel> items, Emitter<CartState> emit) =>
+      emit(CartLoaded(cartItems: items, total: _calcTotal(items)));
+
+  void _onLoad(LoadCartEvent event, Emitter<CartState> emit) {
+    // Cart is already in state — just re-emit it
+    final items = _currentItems;
+    _emitItems(items, emit);
   }
 
-  Future<void> _onAdd(AddToCartEvent event, Emitter<CartState> emit) async {
-    try {
-      await _dio.post(ApiConstants.cartAdd, data: {
-        'productId': event.productId,
-        'quantity': event.quantity,
-        if (event.customSpecs != null) 'customSpecs': event.customSpecs,
-        if (event.note != null) 'note': event.note,
-      });
-      add(LoadCartEvent());
-    } on DioException catch (e) {
-      emit(CartError(e.response?.data?['error'] ?? 'Failed to add to cart'));
+  void _onAdd(AddToCartEvent event, Emitter<CartState> emit) {
+    final items = List<CartItemModel>.from(_currentItems);
+
+    // If same product + same specs already in cart, increment quantity
+    final existingIndex = items.indexWhere(
+      (i) => i.productId == event.productId &&
+          _specsMatch(i.customSpecs, event.customSpecs),
+    );
+
+    if (existingIndex >= 0) {
+      final existing = items[existingIndex];
+      final newQty = existing.quantity + event.quantity;
+      items[existingIndex] = existing.copyWith(
+        quantity: newQty,
+        totalPrice: existing.unitPrice * newQty,
+      );
+    } else {
+      items.add(CartItemModel(
+        id: '${event.productId}_${DateTime.now().millisecondsSinceEpoch}',
+        productId: event.productId,
+        productName: event.productName,
+        quantity: event.quantity,
+        unitPrice: event.unitPrice,
+        totalPrice: event.unitPrice * event.quantity,
+        customSpecs: event.customSpecs,
+        note: event.note,
+      ));
     }
+
+    _emitItems(items, emit);
   }
 
-  Future<void> _onUpdate(UpdateCartItemEvent event, Emitter<CartState> emit) async {
-    try {
-      await _dio.put(ApiConstants.cartItem(event.itemId), data: {'quantity': event.quantity});
-      add(LoadCartEvent());
-    } on DioException catch (e) {
-      emit(CartError(e.response?.data?['error'] ?? 'Failed to update cart'));
+  void _onUpdate(UpdateCartItemEvent event, Emitter<CartState> emit) {
+    final items = List<CartItemModel>.from(_currentItems);
+    final idx = items.indexWhere((i) => i.id == event.itemId);
+    if (idx >= 0) {
+      final item = items[idx];
+      if (event.quantity <= 0) {
+        items.removeAt(idx);
+      } else {
+        items[idx] = item.copyWith(
+          quantity: event.quantity,
+          totalPrice: item.unitPrice * event.quantity,
+        );
+      }
     }
+    _emitItems(items, emit);
   }
 
-  Future<void> _onRemove(RemoveCartItemEvent event, Emitter<CartState> emit) async {
-    try {
-      await _dio.delete(ApiConstants.cartItem(event.itemId));
-      add(LoadCartEvent());
-    } on DioException catch (e) {
-      emit(CartError(e.response?.data?['error'] ?? 'Failed to remove item'));
-    }
+  void _onRemove(RemoveCartItemEvent event, Emitter<CartState> emit) {
+    final items = List<CartItemModel>.from(_currentItems)
+      ..removeWhere((i) => i.id == event.itemId);
+    _emitItems(items, emit);
   }
 
-  Future<void> _onClear(ClearCartEvent event, Emitter<CartState> emit) async {
-    try {
-      await _dio.delete(ApiConstants.cartClear);
-      emit(CartLoaded(cartItems: [], total: 0));
-    } on DioException catch (e) {
-      emit(CartError(e.response?.data?['error'] ?? 'Failed to clear cart'));
+  void _onClear(ClearCartEvent event, Emitter<CartState> emit) {
+    _emitItems([], emit);
+  }
+
+  bool _specsMatch(
+      Map<String, dynamic>? a, Map<String, dynamic>? b) {
+    if (a == null && b == null) return true;
+    if (a == null || b == null) return false;
+    if (a.length != b.length) return false;
+    for (final key in a.keys) {
+      if (a[key] != b[key]) return false;
     }
+    return true;
   }
 }

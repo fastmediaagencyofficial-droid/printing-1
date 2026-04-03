@@ -23,7 +23,19 @@
       "Bash(node_modules/.bin/prisma generate:*)",
       "Bash(node -e \":*)",
       "Bash(flutter analyze:*)",
-      "Bash(node -e \"require\\(''''node-fetch''''\\)\")"
+      "Bash(node -e \"require\\(''''node-fetch''''\\)\")",
+      "Bash(flutter --version)",
+      "Bash(flutter create:*)",
+      "Bash(flutter build:*)",
+      "Bash(echo \"EXIT: $?\")",
+      "Read(//c/Users/Maheen/AppData/Local/Android/sdk/cmdline-tools/**)",
+      "Read(//c/Users/Maheen/AppData/Local/Android/sdk/cmdline-tools/latest/bin/**)",
+      "Bash(\"C:/Users/Maheen/AppData/Local/Android/sdk/cmdline-tools/latest/bin/sdkmanager.bat\" \"ndk;28.2.13676358\")",
+      "Bash(export JAVA_HOME=\"C:/Program Files/Android/Android Studio/jbr\")",
+      "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
+      "Bash(java -version)",
+      "Bash(cmd.exe /c \"C:\\\\Users\\\\Maheen\\\\AppData\\\\Local\\\\Temp\\\\install_ndk.bat\")",
+      "Bash(cmd.exe:*)"
     ]
   }
 }

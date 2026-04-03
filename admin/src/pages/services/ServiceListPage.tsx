@@ -6,9 +6,9 @@ export default function ServiceListPage() {
   const { data: services = [], isLoading } = useServices();
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Services</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Services</h1>
         <p className="text-sm text-gray-500 mt-1">{services.length} services (edit name, description, image)</p>
       </div>
 

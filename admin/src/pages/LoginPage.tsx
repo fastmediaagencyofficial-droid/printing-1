@@ -4,7 +4,8 @@ import { useAuthStore } from '../stores/auth.store';
 import { api } from '../services/api';
 
 export default function LoginPage() {
-  const [idToken, setIdToken] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { setAuth } = useAuthStore();
@@ -12,17 +13,19 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idToken.trim()) { setError('Please enter your Google ID Token'); return; }
-    setLoading(true); setError('');
+    if (!email.trim() || !password.trim()) { setError('Email and password are required'); return; }
+    setLoading(true);
+    setError('');
     try {
-      const res = await api.post('/auth/google-login', { idToken: idToken.trim() });
+      const res = await api.post('/auth/admin-login', { email: email.trim(), password });
       const { token, user } = res.data.data;
-      if (user.role !== 'ADMIN') { setError('Access denied. Admin role required.'); setLoading(false); return; }
       setAuth(token, user);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Authentication failed');
-    } finally { setLoading(false); }
+      setError(err.response?.data?.message || 'Invalid email or password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,32 +41,43 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Google ID Token</label>
-            <textarea value={idToken} onChange={(e) => setIdToken(e.target.value)}
-              rows={4} placeholder="Paste your Google OAuth idToken here…"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none" />
-            <p className="text-xs text-gray-500 mt-1">
-              Get your token from: Google OAuth2 Playground or the Flutter app (developer mode).
-              The token must be from an account with Admin role.
-            </p>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@xfastgroup.com"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              autoComplete="email"
+            />
           </div>
 
-          {error && <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{error}</div>}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+              autoComplete="current-password"
+            />
+          </div>
 
-          <button type="submit" disabled={loading}
-            className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-xl transition-colors disabled:opacity-50"
+          >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
-
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-          <p className="text-xs text-gray-600 font-medium mb-2">First-time setup:</p>
-          <ol className="text-xs text-gray-500 space-y-1 list-decimal list-inside">
-            <li>Sign in to the Flutter app with your Google account</li>
-            <li>In your PostgreSQL DB, run: <code className="bg-gray-200 px-1 rounded">UPDATE users SET role = 'ADMIN' WHERE email = 'your@email.com';</code></li>
-            <li>Get a fresh Google idToken and paste it above</li>
-          </ol>
-        </div>
       </div>
     </div>
   );

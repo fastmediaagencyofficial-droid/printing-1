@@ -8,15 +8,15 @@ export default function UserListPage() {
   const [search, setSearch] = useState('');
 
   const filtered = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase())
+    (u.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.email ?? '').toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-        <p className="text-sm text-gray-500 mt-1">{users.length} registered users</p>
+    <div className="p-4 md:p-8">
+      <div className="mb-5">
+        <h1 className="text-xl md:text-2xl font-bold text-gray-900">Users</h1>
+        <p className="text-sm text-gray-500 mt-0.5">{users.length} registered users</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -26,7 +26,7 @@ export default function UserListPage() {
             placeholder="Search users…"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full max-w-sm border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           />
         </div>
 
@@ -35,22 +35,30 @@ export default function UserListPage() {
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-gray-400 text-sm">No users found.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                  <th className="px-6 py-3 font-medium">User</th>
-                  <th className="px-6 py-3 font-medium">Phone</th>
-                  <th className="px-6 py-3 font-medium">Orders</th>
-                  <th className="px-6 py-3 font-medium">Role</th>
-                  <th className="px-6 py-3 font-medium">Joined</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {filtered.map(u => <UserRow key={u.id} user={u} />)}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                    <th className="px-6 py-3 font-medium">User</th>
+                    <th className="px-6 py-3 font-medium">Phone</th>
+                    <th className="px-6 py-3 font-medium">Orders</th>
+                    <th className="px-6 py-3 font-medium">Role</th>
+                    <th className="px-6 py-3 font-medium">Joined</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filtered.map(u => <UserRow key={u.id} user={u} />)}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {filtered.map(u => <UserCard key={u.id} user={u} />)}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -85,5 +93,38 @@ function UserRow({ user }: { user: AdminUser }) {
       </td>
       <td className="px-6 py-4 text-gray-500">{new Date(user.createdAt).toLocaleDateString()}</td>
     </tr>
+  );
+}
+
+function UserCard({ user }: { user: AdminUser }) {
+  const updateRoleMutation = useUpdateUserRole(user.id);
+  const [role, setRole] = useState(user.role);
+
+  const handleRoleChange = (newRole: string) => {
+    if (newRole === role) return;
+    if (!confirm(`Change ${user.name}'s role to ${newRole}?`)) return;
+    setRole(newRole);
+    updateRoleMutation.mutate(newRole);
+  };
+
+  return (
+    <div className="p-4">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div>
+          <p className="font-medium text-gray-900 text-sm">{user.name}</p>
+          <p className="text-xs text-gray-500">{user.email}</p>
+          {user.phone && <p className="text-xs text-gray-500">{user.phone}</p>}
+        </div>
+        <select value={role} onChange={e => handleRoleChange(e.target.value)}
+          disabled={updateRoleMutation.isPending}
+          className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary disabled:opacity-50 shrink-0">
+          {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+        </select>
+      </div>
+      <div className="flex items-center gap-4 text-xs text-gray-500">
+        <span>{user._count?.orders ?? 0} orders</span>
+        <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+      </div>
+    </div>
   );
 }

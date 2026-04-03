@@ -199,18 +199,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.primaryRed.withOpacity(0.15),
+              color: AppColors.primaryRed.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.primaryRed.withOpacity(0.3),
+                color: AppColors.primaryRed.withValues(alpha: 0.3),
               ),
             ),
-            child: Row(
+            child: const Row(
               children: [
-                const Icon(Icons.info_outline_rounded,
+                Icon(Icons.info_outline_rounded,
                     color: AppColors.primaryRed, size: 18),
-                const SizedBox(width: 8),
-                const Expanded(
+                SizedBox(width: 8),
+                Expanded(
                   child: Text(
                     'Please add the Order ID in the payment description/note',
                     style: TextStyle(
@@ -260,7 +260,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               Container(
                 width: 26,
                 height: 26,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppColors.primaryRed,
                   shape: BoxShape.circle,
                 ),
@@ -361,13 +361,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       ),
                     ],
                   )
-                : Column(
+                : const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.upload_rounded,
                           color: AppColors.primaryRed, size: 40),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(height: 8),
+                      Text(
                         'Tap to upload screenshot',
                         style: TextStyle(
                           fontFamily: 'Poppins',
@@ -376,7 +376,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           color: AppColors.black,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'JPG, PNG supported',
                         style: TextStyle(
                           fontFamily: 'Inter',
@@ -477,7 +477,7 @@ class _PaymentMethodCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.08) : AppColors.white,
+          color: isSelected ? color.withValues(alpha: 0.08) : AppColors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? color : AppColors.borderGrey,
@@ -574,7 +574,7 @@ class _InfoRow extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.12),
+                color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(

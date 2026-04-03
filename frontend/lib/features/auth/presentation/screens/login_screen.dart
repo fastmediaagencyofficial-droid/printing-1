@@ -60,7 +60,7 @@ class LoginScreen extends StatelessWidget {
                               height: 180,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.primaryRed.withOpacity(0.15),
+                                color: AppColors.primaryRed.withValues(alpha: 0.15),
                               ),
                             ),
                           ),
@@ -72,7 +72,7 @@ class LoginScreen extends StatelessWidget {
                               height: 140,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.primaryRed.withOpacity(0.10),
+                                color: AppColors.primaryRed.withValues(alpha: 0.10),
                               ),
                             ),
                           ),
@@ -103,9 +103,9 @@ class LoginScreen extends StatelessWidget {
 
                                 const SizedBox(height: 24),
 
-                                Text(
+                                const Text(
                                   AppStrings.appFullName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 26,
                                     fontWeight: FontWeight.w700,
@@ -119,9 +119,9 @@ class LoginScreen extends StatelessWidget {
 
                                 const SizedBox(height: 8),
 
-                                Text(
+                                const Text(
                                   AppStrings.appTagline,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'Inter',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
@@ -136,12 +136,12 @@ class LoginScreen extends StatelessWidget {
                                 const SizedBox(height: 24),
 
                                 // Stats row
-                                Row(
+                                const Row(
                                   children: [
                                     _StatChip(label: '1000+', sublabel: 'Clients'),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: 12),
                                     _StatChip(label: '5⭐', sublabel: 'Rated'),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: 12),
                                     _StatChip(label: 'Since', sublabel: '2020'),
                                   ],
                                 )
@@ -208,9 +208,9 @@ class LoginScreen extends StatelessWidget {
                           const Spacer(),
 
                           // Terms text
-                          Text(
+                          const Text(
                             AppStrings.bySigningIn,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11,
                               color: AppColors.softGrey,
@@ -313,10 +313,10 @@ class _StatChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.primaryRed.withOpacity(0.15),
+        color: AppColors.primaryRed.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.primaryRed.withOpacity(0.3),
+          color: AppColors.primaryRed.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

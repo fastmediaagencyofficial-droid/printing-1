@@ -18,8 +18,8 @@ export default function QuoteDetailPage() {
   const [status, setStatus] = useState(quote?.status ?? 'PENDING');
   const [saved, setSaved] = useState(false);
 
-  if (isLoading) return <div className="p-8 text-gray-400 text-sm">Loading…</div>;
-  if (!quote) return <div className="p-8 text-red-600 text-sm">Quote not found.</div>;
+  if (isLoading) return <div className="p-4 md:p-8 text-gray-400 text-sm">Loading…</div>;
+  if (!quote) return <div className="p-4 md:p-8 text-red-600 text-sm">Quote not found.</div>;
 
   const handleSave = async () => {
     await updateMutation.mutateAsync({
@@ -32,14 +32,14 @@ export default function QuoteDetailPage() {
   };
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 md:p-8 max-w-3xl">
       <button onClick={() => navigate('/quotes')} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6">
         <ArrowLeft size={16} /> Back to Quotes
       </button>
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Quote Request</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Quote Request</h1>
           <p className="text-sm text-gray-500 mt-1">{new Date(quote.createdAt).toLocaleString()}</p>
         </div>
         <StatusBadge status={quote.status} />
@@ -64,7 +64,7 @@ export default function QuoteDetailPage() {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">Quantity</dt>
-              <dd className="text-gray-700">{quote.quantity.toLocaleString()}</dd>
+              <dd className="text-gray-700">{(quote.quantity ?? 0).toLocaleString()}</dd>
             </div>
             {quote.budgetRange && (
               <div className="flex justify-between">

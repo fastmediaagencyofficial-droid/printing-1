@@ -124,7 +124,7 @@ class _HeroBanner extends StatelessWidget {
               height: 130,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryRed.withOpacity(0.2),
+                color: AppColors.primaryRed.withValues(alpha: 0.2),
               ),
             ),
           ),
@@ -136,7 +136,7 @@ class _HeroBanner extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryRed.withOpacity(0.15),
+                color: AppColors.primaryRed.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -205,10 +205,10 @@ class _HeroBanner extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
+                          color: Colors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                           ),
                         ),
                         child: const Text(
@@ -240,14 +240,14 @@ class _HeroBanner extends StatelessWidget {
 class _StatsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           _StatCard(value: '1000+', label: 'Happy Clients', icon: Icons.people_rounded),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           _StatCard(value: '5 ⭐', label: 'Star Rated', icon: Icons.star_rounded),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           _StatCard(value: '2020', label: 'Est. Since', icon: Icons.verified_rounded),
         ],
       ),
@@ -466,13 +466,13 @@ class _ProductsHorizontalList extends StatelessWidget {
                 // Image placeholder
                 Container(
                   height: 100,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.lightGrey,
-                    borderRadius: const BorderRadius.vertical(
+                    borderRadius: BorderRadius.vertical(
                       top: Radius.circular(16),
                     ),
                   ),
-                  child: Center(
+                  child: const Center(
                     child: Icon(
                       Icons.inventory_2_outlined,
                       color: AppColors.primaryRed,
@@ -573,10 +573,10 @@ class _WhyChooseUsSection extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
                 ),
                 child: Column(
@@ -669,10 +669,10 @@ class _IndustriesGrid extends StatelessWidget {
             onTap: () => context.push('/industries/${industry['slug']}'),
             child: Container(
               decoration: BoxDecoration(
-                color: (industry['color'] as Color).withOpacity(0.08),
+                color: (industry['color'] as Color).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: (industry['color'] as Color).withOpacity(0.2),
+                  color: (industry['color'] as Color).withValues(alpha: 0.2),
                 ),
               ),
               padding: const EdgeInsets.all(16),

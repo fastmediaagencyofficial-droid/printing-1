@@ -99,7 +99,7 @@ class _IndustryCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: industry.color.withOpacity(0.08),
+                color: industry.color.withValues(alpha: 0.08),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Row(
@@ -166,9 +166,9 @@ class _IndustryCard extends StatelessWidget {
                     children: industry.products.map((p) => Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: industry.color.withOpacity(0.08),
+                        color: industry.color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: industry.color.withOpacity(0.25)),
+                        border: Border.all(color: industry.color.withValues(alpha: 0.25)),
                       ),
                       child: Text(
                         p,

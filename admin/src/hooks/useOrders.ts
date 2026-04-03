@@ -26,7 +26,7 @@ const LIST_KEY = ['admin', 'orders'];
 export function useOrders(status?: string) {
   return useQuery<AdminOrder[]>({
     queryKey: [...LIST_KEY, status],
-    queryFn: () => api.get('/admin/orders', { params: status ? { status } : {} }).then(r => r.data.data),
+    queryFn: () => api.get('/admin/orders', { params: { limit: 200, ...(status ? { status } : {}) } }).then(r => r.data.data.orders ?? r.data.data),
   });
 }
 

@@ -21,7 +21,7 @@ const KEY = ['admin', 'quotes'];
 export function useQuotes(status?: string) {
   return useQuery<AdminQuote[]>({
     queryKey: [...KEY, status],
-    queryFn: () => api.get('/admin/quotes', { params: status ? { status } : {} }).then(r => r.data.data),
+    queryFn: () => api.get('/admin/quotes', { params: { limit: 200, ...(status ? { status } : {}) } }).then(r => r.data.data.quotes ?? r.data.data),
   });
 }
 
