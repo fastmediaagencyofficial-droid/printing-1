@@ -1,10 +1,11 @@
 class ApiConstants {
   ApiConstants._();
 
-  // Change to your server URL before building
+  // Dev emulator:  http://10.0.2.2:5000/api/v1
+  // Production:    https://your-app.up.railway.app/api/v1
   static const String _base = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:5000/api/v1', // emulator → localhost
+    defaultValue: 'http://10.0.2.2:5000/api/v1',
   );
 
   // Auth

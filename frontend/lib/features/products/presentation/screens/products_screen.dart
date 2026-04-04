@@ -151,9 +151,13 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     ),
                     if (error != null) ...[
                       const SizedBox(width: 8),
-                      Text(error,
-                          style: const TextStyle(
-                              fontFamily: 'Inter', fontSize: 12, color: AppColors.primaryRed)),
+                      Expanded(
+                        child: Text(error,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontFamily: 'Inter', fontSize: 12, color: AppColors.primaryRed)),
+                      ),
                     ],
                   ],
                 ),

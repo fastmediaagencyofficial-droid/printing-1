@@ -73,27 +73,38 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       ]);
 
       final productsRes = results[0];
-      final productsData = productsRes.data['data'] as Map<String, dynamic>;
-      final products = (productsData['products'] as List<dynamic>)
+      // Backend returns data as a List directly (not wrapped in { products: [...] })
+      final rawProducts = productsRes.data['data'];
+      final products = (rawProducts is List ? rawProducts : <dynamic>[])
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
           .toList();
+      final pagination = productsRes.data['pagination'];
+      final total = (pagination is Map ? pagination['total'] : null) as int? ?? products.length;
 
       if (results.length > 1) {
-        final catsData = results[1].data['data'] as Map<String, dynamic>;
-        _categories = (catsData['categories'] as List<dynamic>)
-            .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+        // Categories endpoint returns a List of strings (category names) directly
+        final rawCats = results[1].data['data'];
+        _categories = (rawCats is List ? rawCats : <dynamic>[])
+            .map((e) {
+              final name = e.toString();
+              return CategoryModel(id: name, name: name, slug: name.toLowerCase().replaceAll(' ', '-'));
+            })
             .toList();
       }
 
       emit(ProductsLoaded(
         products: products,
         categories: _categories,
-        total: (productsData['total'] as num?)?.toInt() ?? products.length,
+        total: total,
       ));
     } on DioException catch (e) {
-      emit(ProductError(e.response?.data?['error'] ?? 'Failed to load products'));
-    } catch (_) {
-      emit(ProductError('Failed to load products'));
+      final msg = e.type == DioExceptionType.connectionTimeout ||
+              e.type == DioExceptionType.receiveTimeout
+          ? 'Cannot reach server. Make sure backend is running.'
+          : e.response?.data?['error'] ?? e.message ?? 'Failed to load products';
+      emit(ProductError(msg));
+    } catch (e) {
+      emit(ProductError('Error: $e'));
     }
   }
 
@@ -111,9 +122,12 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
   Future<void> _onLoadCategories(LoadCategoriesEvent event, Emitter<ProductState> emit) async {
     try {
       final res = await _dio.get(ApiConstants.productCategories);
-      final data = res.data['data'] as Map<String, dynamic>;
-      _categories = (data['categories'] as List<dynamic>)
-          .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+      final rawCats = res.data['data'];
+      _categories = (rawCats is List ? rawCats : <dynamic>[])
+          .map((e) {
+            final name = e.toString();
+            return CategoryModel(id: name, name: name, slug: name.toLowerCase().replaceAll(' ', '-'));
+          })
           .toList();
     } catch (_) {}
   }
