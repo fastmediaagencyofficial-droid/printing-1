@@ -6,6 +6,10 @@ import '../../data/models/order_model.dart';
 
 abstract class OrderEvent {}
 class LoadOrdersEvent extends OrderEvent {}
+class TrackOrdersByPhoneEvent extends OrderEvent {
+  final String phone;
+  TrackOrdersByPhoneEvent(this.phone);
+}
 class LoadOrderDetailEvent extends OrderEvent {
   final String id;
   LoadOrderDetailEvent(this.id);
@@ -21,6 +25,35 @@ class PlaceOrderEvent extends OrderEvent {
     required this.paymentMethod,
     this.shippingStreet, this.shippingCity, this.shippingProvince,
     this.shippingPostal, this.notes,
+  });
+}
+
+class PlaceGuestOrderEvent extends OrderEvent {
+  final String customerName;
+  final String customerPhone;
+  final String? customerEmail;
+  final String? productDescription;
+  final String? productSize;
+  final String? productCategory;
+  final String paymentMethod;
+  final List<Map<String, dynamic>> items;
+  final double totalAmount;
+  final String? shippingStreet;
+  final String? shippingCity;
+  final String? notes;
+  PlaceGuestOrderEvent({
+    required this.customerName,
+    required this.customerPhone,
+    this.customerEmail,
+    this.productDescription,
+    this.productSize,
+    this.productCategory,
+    required this.paymentMethod,
+    required this.items,
+    required this.totalAmount,
+    this.shippingStreet,
+    this.shippingCity,
+    this.notes,
   });
 }
 class CancelOrderEvent extends OrderEvent {
@@ -51,8 +84,10 @@ class OrderError extends OrderState {
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
   OrderBloc() : super(OrderInitial()) {
     on<LoadOrdersEvent>(_onLoad);
+    on<TrackOrdersByPhoneEvent>(_onTrack);
     on<LoadOrderDetailEvent>(_onDetail);
     on<PlaceOrderEvent>(_onPlace);
+    on<PlaceGuestOrderEvent>(_onPlaceGuest);
     on<CancelOrderEvent>(_onCancel);
   }
 
@@ -69,6 +104,20 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       emit(OrdersLoaded(orders));
     } on DioException catch (e) {
       emit(OrderError(e.response?.data?['error'] ?? 'Failed to load orders'));
+    }
+  }
+
+  Future<void> _onTrack(TrackOrdersByPhoneEvent event, Emitter<OrderState> emit) async {
+    emit(OrdersLoading());
+    try {
+      final res = await _dio.get(ApiConstants.trackOrders(event.phone));
+      final raw = res.data['data'];
+      final orders = (raw is List ? raw : <dynamic>[])
+          .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      emit(OrdersLoaded(orders));
+    } on DioException catch (e) {
+      emit(OrderError(e.response?.data?['error'] ?? 'Failed to find orders'));
     }
   }
 
@@ -92,6 +141,30 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         if (event.shippingCity != null) 'shippingCity': event.shippingCity,
         if (event.shippingProvince != null) 'shippingProvince': event.shippingProvince,
         if (event.shippingPostal != null) 'shippingPostal': event.shippingPostal,
+        if (event.notes != null) 'notes': event.notes,
+      });
+      final order = OrderModel.fromJson(res.data['data']['order'] as Map<String, dynamic>);
+      emit(OrderPlaced(order));
+    } on DioException catch (e) {
+      emit(OrderError(e.response?.data?['error'] ?? 'Failed to place order'));
+    }
+  }
+
+  Future<void> _onPlaceGuest(PlaceGuestOrderEvent event, Emitter<OrderState> emit) async {
+    emit(OrdersLoading());
+    try {
+      final res = await _dio.post(ApiConstants.guestOrder, data: {
+        'customerName': event.customerName,
+        'customerPhone': event.customerPhone,
+        if (event.customerEmail != null) 'customerEmail': event.customerEmail,
+        if (event.productDescription != null) 'productDescription': event.productDescription,
+        if (event.productSize != null) 'productSize': event.productSize,
+        if (event.productCategory != null) 'productCategory': event.productCategory,
+        'paymentMethod': event.paymentMethod,
+        'items': event.items,
+        'totalAmount': event.totalAmount,
+        if (event.shippingStreet != null) 'shippingStreet': event.shippingStreet,
+        if (event.shippingCity != null) 'shippingCity': event.shippingCity,
         if (event.notes != null) 'notes': event.notes,
       });
       final order = OrderModel.fromJson(res.data['data']['order'] as Map<String, dynamic>);

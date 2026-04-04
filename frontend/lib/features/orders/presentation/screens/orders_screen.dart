@@ -7,82 +7,185 @@ import '../../../../injection_container.dart' as di;
 import '../bloc/order_bloc.dart';
 import '../../data/models/order_model.dart';
 
-class OrdersScreen extends StatelessWidget {
+class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key});
+  @override
+  State<OrdersScreen> createState() => _OrdersScreenState();
+}
+
+class _OrdersScreenState extends State<OrdersScreen> {
+  final _phoneController = TextEditingController();
+  bool _searched = false;
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  void _track(BuildContext context) {
+    final phone = _phoneController.text.trim();
+    if (phone.length < 7) return;
+    setState(() => _searched = true);
+    context.read<OrderBloc>().add(TrackOrdersByPhoneEvent(phone));
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => di.sl<OrderBloc>()..add(LoadOrdersEvent()),
-      child: Scaffold(
-        backgroundColor: AppColors.white,
-        appBar: AppBar(
-          title: const Text('My Orders'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_rounded),
-            onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
+      create: (_) => di.sl<OrderBloc>(),
+      child: Builder(builder: (context) {
+        return Scaffold(
+          backgroundColor: AppColors.white,
+          appBar: AppBar(
+            title: const Text('Track Order'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () { try { context.pop(); } catch (_) { context.go('/'); } },
+            ),
           ),
-        ),
-        body: BlocBuilder<OrderBloc, OrderState>(
-          builder: (context, state) {
-            if (state is OrdersLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryRed),
-              );
-            }
-            if (state is OrderError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 48, color: AppColors.mediumGrey),
-                    const SizedBox(height: 12),
-                    Text(state.message,
-                        style: const TextStyle(fontFamily: 'Inter', color: AppColors.mediumGrey)),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () => context.read<OrderBloc>().add(LoadOrdersEvent()),
-                      child: const Text('Retry'),
-                    ),
-                  ],
+          body: Column(
+            children: [
+              // ── Phone lookup bar ────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: AppColors.white,
+                  border: Border(bottom: BorderSide(color: AppColors.borderGrey)),
                 ),
-              );
-            }
-            if (state is OrdersLoaded && state.orders.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                child: Row(
                   children: [
-                    const Icon(Icons.receipt_long_rounded, size: 80, color: AppColors.borderGrey),
-                    const SizedBox(height: 20),
-                    const Text('No orders yet',
-                        style: TextStyle(
-                            fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 8),
-                    const Text('Your order history will appear here',
-                        style: TextStyle(
-                            fontFamily: 'Inter', fontSize: 14, color: AppColors.mediumGrey)),
-                    const SizedBox(height: 28),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: ElevatedButton(
-                        onPressed: () => context.go(AppRoutes.products),
-                        child: const Text('Start Shopping'),
+                    Expanded(
+                      child: TextField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          hintText: 'Enter your phone number',
+                          prefixIcon: Icon(Icons.phone_outlined),
+                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onSubmitted: (_) => _track(context),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: () => _track(context),
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(80, 48),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      child: const Text('Search'),
+                    ),
                   ],
                 ),
-              );
-            }
-            if (state is OrdersLoaded) {
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: state.orders.length,
-                itemBuilder: (_, i) => _OrderCard(order: state.orders[i]),
-              );
-            }
-            return const SizedBox();
-          },
+              ),
+
+              // ── Results ─────────────────────────────────────────
+              Expanded(
+                child: BlocBuilder<OrderBloc, OrderState>(
+                  builder: (context, state) {
+                    if (!_searched) {
+                      return _PhoneLookupHint();
+                    }
+                    if (state is OrdersLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppColors.primaryRed),
+                      );
+                    }
+                    if (state is OrderError) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: AppColors.mediumGrey),
+                            const SizedBox(height: 12),
+                            Text(state.message,
+                                style: const TextStyle(
+                                    fontFamily: 'Inter', color: AppColors.mediumGrey)),
+                            const SizedBox(height: 20),
+                            ElevatedButton(
+                              onPressed: () => _track(context),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    if (state is OrdersLoaded && state.orders.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.receipt_long_rounded,
+                                size: 64, color: AppColors.borderGrey),
+                            SizedBox(height: 16),
+                            Text('No orders found',
+                                style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700)),
+                            SizedBox(height: 8),
+                            Text('No orders placed with this phone number',
+                                style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 13,
+                                    color: AppColors.mediumGrey)),
+                          ],
+                        ),
+                      );
+                    }
+                    if (state is OrdersLoaded) {
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: state.orders.length,
+                        itemBuilder: (_, i) => _OrderCard(order: state.orders[i]),
+                      );
+                    }
+                    return const SizedBox();
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _PhoneLookupHint extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                color: AppColors.redSurface,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.search_rounded,
+                  size: 40, color: AppColors.primaryRed),
+            ),
+            const SizedBox(height: 20),
+            const Text('Track Your Order',
+                style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            const Text(
+              'Enter the phone number you used when placing your order to see your order status.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontFamily: 'Inter', fontSize: 13, color: AppColors.mediumGrey),
+            ),
+          ],
         ),
       ),
     );

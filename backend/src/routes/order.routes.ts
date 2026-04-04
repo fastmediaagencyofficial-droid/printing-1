@@ -1,7 +1,9 @@
 import { Router } from 'express';
-import { createOrder, getUserOrders, getOrderById, uploadPaymentProof, cancelOrder } from '../controllers';
+import { createOrder, guestCreateOrder, trackOrdersByPhone, getUserOrders, getOrderById, uploadPaymentProof, cancelOrder } from '../controllers';
 import { authMiddleware } from '../middleware/auth.middleware';
 const router = Router();
+router.post('/guest', guestCreateOrder);          // no auth — guest checkout
+router.get('/track', trackOrdersByPhone);          // no auth — track by phone number
 router.use(authMiddleware);
 router.get('/', getUserOrders);
 router.post('/', createOrder);

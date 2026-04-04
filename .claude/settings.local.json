@@ -35,7 +35,11 @@
       "Bash(export PATH=\"$JAVA_HOME/bin:$PATH\")",
       "Bash(java -version)",
       "Bash(cmd.exe /c \"C:\\\\Users\\\\Maheen\\\\AppData\\\\Local\\\\Temp\\\\install_ndk.bat\")",
-      "Bash(cmd.exe:*)"
+      "Bash(cmd.exe:*)",
+      "Bash(npx prisma:*)",
+      "Bash(node -e 'const { PrismaClient } = require\\('\\\\''@prisma/client'\\\\''\\); const p = new PrismaClient\\(\\); p.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name='\\\\''orders'\\\\'' AND column_name IN \\('\\\\''customerPhone'\\\\'','\\\\''customerEmail'\\\\'','\\\\''productDescription'\\\\'','\\\\''productSize'\\\\'','\\\\''productCategory'\\\\''\\)`.then\\(r => console.log\\(JSON.stringify\\(r\\)\\)\\).finally\\(\\(\\) => p.$disconnect\\(\\)\\)')",
+      "Bash(dart analyze:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

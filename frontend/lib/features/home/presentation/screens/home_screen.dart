@@ -1,12 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_routes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../products/presentation/bloc/product_bloc.dart';
 
-class HomeScreen extends StatelessWidget {
+String _fixImageUrl(String url) =>
+    url.replaceFirst('http://localhost:', 'http://10.0.2.2:');
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ProductBloc>().add(LoadProductsEvent(featured: true));
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -431,94 +451,138 @@ class _ServicesGrid extends StatelessWidget {
   }
 }
 
-// ─── PRODUCTS HORIZONTAL LIST ────────────────────────────────────────────────
+// ─── PRODUCTS HORIZONTAL LIST (real data) ────────────────────────────────────
 class _ProductsHorizontalList extends StatelessWidget {
-  final List<Map<String, dynamic>> _products = const [
-    {'name': 'Business Cards', 'price': 'From PKR 1,500', 'category': 'Business Printing'},
-    {'name': 'Roll-Up Banners', 'price': 'From PKR 3,500', 'category': 'Large Format'},
-    {'name': 'Custom Boxes', 'price': 'Custom Quote', 'category': 'Packaging'},
-    {'name': 'Wedding Cards', 'price': 'From PKR 5,000', 'category': 'Speciality'},
-    {'name': 'Stickers', 'price': 'From PKR 800', 'category': 'Labels'},
-  ];
-
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 190,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _products.length,
-        itemBuilder: (context, index) {
-          final product = _products[index];
-          return Container(
-            width: 150,
-            margin: const EdgeInsets.only(right: 12),
-            decoration: BoxDecoration(
-              color: AppColors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderGrey),
-              boxShadow: AppColors.cardShadow,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image placeholder
-                Container(
-                  height: 100,
-                  decoration: const BoxDecoration(
-                    color: AppColors.lightGrey,
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(16),
+    return BlocBuilder<ProductBloc, ProductState>(
+      builder: (context, state) {
+        if (state is ProductsLoaded && state.products.isNotEmpty) {
+          final featured = state.products.take(8).toList();
+          return SizedBox(
+            height: 190,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: featured.length,
+              itemBuilder: (context, index) {
+                final product = featured[index];
+                final imgUrl = product.displayImage;
+                return GestureDetector(
+                  onTap: () => context.push(
+                    AppRoutes.productDetail,
+                    extra: {
+                      'id': product.id,
+                      'name': product.name,
+                      'category': product.category,
+                      'startingPrice': product.startingPrice.toInt(),
+                      'isCustomQuote': product.startingPrice == 0,
+                      'imageUrl': imgUrl,
+                    },
+                  ),
+                  child: Container(
+                    width: 150,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.borderGrey),
+                      boxShadow: AppColors.cardShadow,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          child: SizedBox(
+                            height: 100,
+                            width: double.infinity,
+                            child: imgUrl.isNotEmpty
+                                ? Image.network(
+                                    _fixImageUrl(imgUrl),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        const _ProductImgPlaceholder(),
+                                  )
+                                : const _ProductImgPlaceholder(),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product.name,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.black,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                product.formattedPrice,
+                                style: const TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryRed,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.inventory_2_outlined,
-                      color: AppColors.primaryRed,
-                      size: 40,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        product['name'] as String,
-                        style: const TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.black,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        product['price'] as String,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryRed,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                )
+                    .animate(delay: Duration(milliseconds: index * 80))
+                    .fadeIn()
+                    .slideX(begin: 0.2);
+              },
             ),
-          )
-              .animate(delay: Duration(milliseconds: index * 80))
-              .fadeIn()
-              .slideX(begin: 0.2);
-        },
-      ),
+          );
+        }
+        // Fallback while loading
+        return SizedBox(
+          height: 190,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: 4,
+            itemBuilder: (_, __) => Container(
+              width: 150,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: AppColors.lightGrey,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.borderGrey),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
+}
+
+class _ProductImgPlaceholder extends StatelessWidget {
+  const _ProductImgPlaceholder();
+  @override
+  Widget build(BuildContext context) => Container(
+        color: AppColors.lightGrey,
+        child: const Center(
+          child: Icon(Icons.inventory_2_outlined,
+              color: AppColors.primaryRed, size: 40),
+        ),
+      );
 }
 
 // ─── WHY CHOOSE US ───────────────────────────────────────────────────────────

@@ -6,14 +6,21 @@ export interface AdminOrder {
   orderNumber: string;
   status: string;
   totalAmount: number;
+  paymentMethod: string;
   notes: string | null;
+  adminNotes: string | null;
   paymentProofUrl: string | null;
   paymentVerifiedAt: string | null;
+  shippingStreet: string | null;
+  shippingCity: string | null;
+  shippingProvince: string | null;
   createdAt: string;
   updatedAt: string;
-  customer: { id: string; name: string; email: string; phone: string | null };
+  customer: { id: string | null; name: string; email: string; phone: string | null };
+  printDetails: { description: string | null; size: string | null; category: string | null };
   items: Array<{
     id: string;
+    productName?: string;
     quantity: number;
     unitPrice: number;
     totalPrice: number;

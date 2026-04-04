@@ -5,6 +5,16 @@ import { StatusBadge } from '../../components/StatusBadge';
 
 const ORDER_STATUSES = ['PENDING_PAYMENT', 'PAYMENT_UPLOADED', 'CONFIRMED', 'IN_PRODUCTION', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
 
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+  if (!value) return null;
+  return (
+    <div className="flex flex-col sm:flex-row sm:gap-2">
+      <span className="text-xs text-gray-400 sm:w-32 shrink-0">{label}</span>
+      <span className="text-sm text-gray-800 font-medium">{value}</span>
+    </div>
+  );
+}
+
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -41,24 +51,47 @@ export default function OrderDetailPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h2 className="text-base font-semibold text-gray-900 mb-4">Order Items</h2>
             <div className="divide-y divide-gray-50">
-              {order.items.map(item => {
-                const snapshot = item.productSnapshot || {};
-                return (
-                  <div key={item.id} className="py-3 flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">{snapshot.name || 'Product'}</p>
-                      <p className="text-xs text-gray-500">Qty: {item.quantity} × ₨{(item.unitPrice ?? 0).toLocaleString()}</p>
-                    </div>
-                    <p className="font-semibold text-sm">₨{(item.totalPrice ?? 0).toLocaleString()}</p>
+              {order.items.map(item => (
+                <div key={item.id} className="py-3 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">
+                      {item.productName || item.productSnapshot?.name || 'Product'}
+                    </p>
+                    <p className="text-xs text-gray-500">Qty: {item.quantity} × ₨{(item.unitPrice ?? 0).toLocaleString()}</p>
                   </div>
-                );
-              })}
+                  <p className="font-semibold text-sm">₨{(item.totalPrice ?? 0).toLocaleString()}</p>
+                </div>
+              ))}
             </div>
             <div className="border-t border-gray-100 pt-3 mt-3 flex justify-between">
               <span className="font-semibold text-gray-900">Total</span>
               <span className="font-bold text-lg">₨{(order.totalAmount ?? 0).toLocaleString()}</span>
             </div>
           </div>
+
+          {/* Print Job Details */}
+          {(order.printDetails?.description || order.printDetails?.size || order.printDetails?.category) && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Print Job Details</h2>
+              <div className="space-y-3">
+                <InfoRow label="Category" value={order.printDetails?.category} />
+                <InfoRow label="Size" value={order.printDetails?.size} />
+                <InfoRow label="Description" value={order.printDetails?.description} />
+              </div>
+            </div>
+          )}
+
+          {/* Delivery Address */}
+          {(order.shippingStreet || order.shippingCity) && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Delivery Address</h2>
+              <div className="space-y-3">
+                <InfoRow label="Street" value={order.shippingStreet} />
+                <InfoRow label="City" value={order.shippingCity} />
+                <InfoRow label="Province" value={order.shippingProvince} />
+              </div>
+            </div>
+          )}
 
           {/* Payment Proof */}
           {order.paymentProofUrl && (
@@ -88,8 +121,16 @@ export default function OrderDetailPage() {
           {/* Notes */}
           {order.notes && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-base font-semibold text-gray-900 mb-2">Notes</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-2">Customer Notes</h2>
               <p className="text-sm text-gray-700">{order.notes}</p>
+            </div>
+          )}
+
+          {/* Admin Notes */}
+          {order.adminNotes && (
+            <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
+              <h2 className="text-base font-semibold text-amber-800 mb-2">Admin Notes</h2>
+              <p className="text-sm text-amber-700">{order.adminNotes}</p>
             </div>
           )}
         </div>
@@ -98,10 +139,18 @@ export default function OrderDetailPage() {
         <div className="space-y-6">
           {/* Customer */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-base font-semibold text-gray-900 mb-3">Customer</h2>
-            <p className="font-medium text-gray-900">{order.customer?.name}</p>
-            <p className="text-sm text-gray-500">{order.customer?.email}</p>
-            {order.customer?.phone && <p className="text-sm text-gray-500">{order.customer.phone}</p>}
+            <h2 className="text-base font-semibold text-gray-900 mb-4">Customer</h2>
+            <div className="space-y-3">
+              <InfoRow label="Name" value={order.customer?.name} />
+              <InfoRow label="Email" value={order.customer?.email} />
+              <InfoRow label="Phone" value={order.customer?.phone} />
+            </div>
+          </div>
+
+          {/* Payment */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-base font-semibold text-gray-900 mb-3">Payment</h2>
+            <InfoRow label="Method" value={order.paymentMethod} />
           </div>
 
           {/* Update Status */}

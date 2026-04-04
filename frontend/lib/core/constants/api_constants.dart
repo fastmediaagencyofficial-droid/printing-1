@@ -36,6 +36,8 @@ class ApiConstants {
 
   // Orders
   static const String orders                   = '$_base/orders';
+  static const String guestOrder               = '$_base/orders/guest';
+  static String trackOrders(String phone)      => '$_base/orders/track?phone=${Uri.encodeQueryComponent(phone)}';
   static String orderById(String id)           => '$_base/orders/$id';
   static String orderPaymentProof(String id)   => '$_base/orders/$id/payment-proof';
   static String orderCancel(String id)         => '$_base/orders/$id/cancel';

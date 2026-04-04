@@ -463,6 +463,87 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
+/** POST /orders/guest — no auth required, collects full customer + print job details */
+export const guestCreateOrder = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      customerName, customerPhone, customerEmail,
+      productDescription, productSize, productCategory,
+      items, totalAmount, paymentMethod,
+      shippingStreet, shippingCity, shippingProvince, shippingPostal, notes,
+    } = req.body;
+
+    if (!customerName || !customerPhone) {
+      sendBadRequest(res, 'customerName and customerPhone are required'); return;
+    }
+    if (!items?.length || !totalAmount || !paymentMethod) {
+      sendBadRequest(res, 'items, totalAmount and paymentMethod are required'); return;
+    }
+
+    const order = await prisma.order.create({
+      data: {
+        orderId: makeOrderId(),
+        userId: null,
+        userEmail: customerEmail || `${customerPhone}@guest.fastprinting`,
+        userName: customerName,
+        customerPhone,
+        customerEmail: customerEmail || null,
+        productDescription: productDescription || null,
+        productSize: productSize || null,
+        productCategory: productCategory || null,
+        totalAmount,
+        paymentMethod,
+        shippingStreet, shippingCity, shippingProvince, shippingPostal,
+        notes: notes || null,
+        status: 'PENDING_PAYMENT',
+        items: {
+          create: items.map((it: any) => ({
+            productId: it.productId || null,
+            productName: it.productName,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            totalPrice: it.totalPrice,
+            customSpecs: it.customSpecs || undefined,
+          })),
+        },
+      },
+      include: { items: true },
+    });
+
+    // Notify admin (non-blocking)
+    if (process.env.EMAIL_USER) {
+      sendEmail({
+        to: process.env.EMAIL_USER,
+        subject: `🆕 Guest Order: ${order.orderId}`,
+        html: adminNewOrderHtml(order.orderId, customerName, customerEmail || customerPhone, totalAmount, paymentMethod),
+      });
+    }
+
+    sendCreated(res, { orderId: order.orderId, order }, 'Order placed successfully');
+  } catch (err) {
+    logger.error('guestCreateOrder:', err);
+    sendError(res, 500, 'Failed to create order');
+  }
+};
+
+/** GET /orders/track?phone=03xx — no auth, returns orders by customer phone */
+export const trackOrdersByPhone = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { phone } = req.query;
+    if (!phone || String(phone).trim().length < 7) {
+      sendBadRequest(res, 'phone query parameter is required'); return;
+    }
+    const orders = await prisma.order.findMany({
+      where: { customerPhone: { contains: String(phone).trim() } },
+      include: { items: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    sendSuccess(res, orders);
+  } catch (err) {
+    sendError(res, 500, 'Failed to track orders');
+  }
+};
+
 export const getUserOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const orders = await prisma.order.findMany({
@@ -980,6 +1061,22 @@ export const adminUploadIndustryImage = async (req: AuthRequest, res: Response):
 //  ADMIN — ORDERS
 // ════════════════════════════════════════════════════════════════════
 
+const formatOrderForAdmin = (order: any) => ({
+  ...order,
+  orderNumber: order.orderId,
+  customer: {
+    id: order.userId || null,
+    name: order.user?.displayName || order.userName,
+    email: order.customerEmail || order.user?.email || order.userEmail,
+    phone: order.customerPhone || order.user?.phone || null,
+  },
+  printDetails: {
+    description: order.productDescription || null,
+    size: order.productSize || null,
+    category: order.productCategory || null,
+  },
+});
+
 export const adminGetOrders = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const page = parseInt(String(req.query.page || '1'));
@@ -992,12 +1089,12 @@ export const adminGetOrders = async (req: AuthRequest, res: Response): Promise<v
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where, skip, take: limit,
-        include: { user: { select: { displayName: true, email: true } }, items: true },
+        include: { user: { select: { displayName: true, email: true, phone: true } }, items: true },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.order.count({ where }),
     ]);
-    sendSuccess(res, { orders, total, page, limit });
+    sendSuccess(res, { orders: orders.map(formatOrderForAdmin), total, page, limit });
   } catch (err) { logger.error('adminGetOrders:', err); sendError(res, 500, 'Failed to fetch orders'); }
 };
 
@@ -1008,7 +1105,7 @@ export const adminGetOrder = async (req: AuthRequest, res: Response): Promise<vo
       include: { user: { select: { displayName: true, email: true, phone: true } }, items: true },
     });
     if (!order) { sendNotFound(res, 'Order not found'); return; }
-    sendSuccess(res, order);
+    sendSuccess(res, formatOrderForAdmin(order));
   } catch (err) { sendError(res, 500, 'Failed to fetch order'); }
 };
 
@@ -1180,7 +1277,7 @@ export const adminGetDashboard = async (_req: AuthRequest, res: Response): Promi
   try {
     const [
       totalOrders, pendingPayment, paymentUploaded, confirmed, inProduction, shipped, delivered, cancelled,
-      recentOrders, unreadContacts, pendingQuotes, revenueResult,
+      recentOrders, unreadContacts, pendingQuotes, revenueResult, totalProducts,
     ] = await Promise.all([
       prisma.order.count(),
       prisma.order.count({ where: { status: 'PENDING_PAYMENT' } }),
@@ -1192,7 +1289,7 @@ export const adminGetDashboard = async (_req: AuthRequest, res: Response): Promi
       prisma.order.count({ where: { status: 'CANCELLED' } }),
       prisma.order.findMany({
         take: 5, orderBy: { createdAt: 'desc' },
-        select: { id: true, orderId: true, userName: true, status: true, totalAmount: true, createdAt: true, paymentMethod: true },
+        select: { id: true, orderId: true, userName: true, userEmail: true, customerEmail: true, status: true, totalAmount: true, createdAt: true, paymentMethod: true },
       }),
       prisma.contactMessage.count({ where: { isRead: false } }),
       prisma.quote.count({ where: { status: 'PENDING' } }),
@@ -1200,19 +1297,32 @@ export const adminGetDashboard = async (_req: AuthRequest, res: Response): Promi
         _sum: { totalAmount: true },
         where: { status: { in: ['CONFIRMED', 'IN_PRODUCTION', 'SHIPPED', 'DELIVERED'] } },
       }),
+      prisma.product.count({ where: { isActive: true } }),
     ]);
 
     sendSuccess(res, {
-      orders: {
-        total: totalOrders,
-        byStatus: { PENDING_PAYMENT: pendingPayment, PAYMENT_UPLOADED: paymentUploaded,
-          CONFIRMED: confirmed, IN_PRODUCTION: inProduction, SHIPPED: shipped,
-          DELIVERED: delivered, CANCELLED: cancelled },
-      },
-      revenue: { totalVerified: revenueResult._sum.totalAmount || 0 },
-      recentOrders,
+      totalOrders,
+      totalRevenue: revenueResult._sum.totalAmount || 0,
+      pendingPayments: pendingPayment,
       unreadContacts,
+      totalProducts,
       pendingQuotes,
+      ordersByStatus: {
+        PENDING_PAYMENT: pendingPayment, PAYMENT_UPLOADED: paymentUploaded,
+        CONFIRMED: confirmed, IN_PRODUCTION: inProduction, SHIPPED: shipped,
+        DELIVERED: delivered, CANCELLED: cancelled,
+      },
+      recentOrders: recentOrders.map(o => ({
+        id: o.id,
+        orderNumber: o.orderId,
+        totalAmount: o.totalAmount,
+        status: o.status,
+        createdAt: o.createdAt,
+        customer: {
+          name: o.userName,
+          email: o.customerEmail || o.userEmail,
+        },
+      })),
     });
   } catch (err) { logger.error('adminGetDashboard:', err); sendError(res, 500, 'Failed to fetch dashboard data'); }
 };
